@@ -1,6 +1,6 @@
-/* ==============================
-   Puja Darshan - Main Styles
-   ============================== */
+/* =========================================
+   PUJA DARSHAN - PREMIUM WEBSITE STYLE
+   ========================================= */
 
 * {
     margin: 0;
@@ -14,9 +14,9 @@ html {
 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    line-height: 1.6;
     background: #fffaf5;
     color: #29231f;
+    line-height: 1.7;
 }
 
 a {
@@ -25,22 +25,25 @@ a {
 }
 
 .container {
-    width: min(1120px, 92%);
+    width: min(1180px, 92%);
     margin: 0 auto;
 }
 
-/* ==============================
-   Header
-   ============================== */
+
+/* =========================================
+   HEADER
+   ========================================= */
 
 .site-header {
-    background: #1b1110;
-    color: #ffffff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #160d0b;
+    color: #fff;
+    border-bottom: 1px solid rgba(229, 163, 61, 0.25);
+    position: relative;
+    z-index: 10;
 }
 
-.nav-container {
-    min-height: 74px;
+.nav-wrapper {
+    min-height: 76px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -48,75 +51,118 @@ a {
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.logo span {
-    color: #e5a33d;
-}
-
-nav {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 10px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #f4c76a;
+    letter-spacing: 0.3px;
 }
 
-nav a {
-    color: #f8eee5;
-    font-size: 0.95rem;
-    transition: color 0.3s ease;
-}
-
-nav a:hover {
+.logo-symbol {
+    font-size: 1.55rem;
     color: #e5a33d;
 }
 
-/* ==============================
-   Hero
-   ============================== */
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+}
+
+.main-nav a {
+    color: #f4eee8;
+    font-size: 0.95rem;
+    transition: 0.3s ease;
+    position: relative;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    color: #f1b84b;
+}
+
+.main-nav a.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -9px;
+    height: 2px;
+    background: #e5a33d;
+}
+
+
+/* =========================================
+   HERO
+   ========================================= */
 
 .hero {
-    min-height: 620px;
+    min-height: 680px;
     display: flex;
     align-items: center;
+    position: relative;
+    overflow: hidden;
+
     background:
         linear-gradient(
-            rgba(27, 17, 16, 0.78),
-            rgba(27, 17, 16, 0.88)
+            90deg,
+            rgba(20, 9, 7, 0.95) 0%,
+            rgba(20, 9, 7, 0.78) 48%,
+            rgba(20, 9, 7, 0.35) 100%
         ),
-        url("../images/durga-puja/hero.jpg") center / cover no-repeat;
-    color: #ffffff;
+        url("../images/durga-puja/hero.jpg") center/cover no-repeat;
+
+    color: #fff;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(
+            circle at 75% 35%,
+            rgba(229, 163, 61, 0.16),
+            transparent 35%
+        );
 }
 
 .hero-content {
-    max-width: 780px;
+    position: relative;
+    z-index: 2;
     padding: 90px 0;
+    max-width: 760px;
 }
 
-.eyebrow {
+.eyebrow,
+.section-label {
     color: #e5a33d;
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
 }
 
 .hero h1 {
-    max-width: 760px;
-    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3rem, 7vw, 5.7rem);
     line-height: 1.05;
-    margin-bottom: 24px;
+    font-weight: 700;
+    margin-bottom: 28px;
 }
 
-.hero h1 span {
+.hero h1 span,
+.intro-content h2 span,
+.section-heading h2 span,
+.culture-content h2 span,
+.cta-section h2 span {
     color: #e5a33d;
 }
 
-.hero-text {
+.hero-description {
     max-width: 650px;
-    color: #eadfd7;
+    color: #eee4dc;
     font-size: 1.08rem;
     margin-bottom: 34px;
 }
@@ -128,55 +174,89 @@ nav a:hover {
 }
 
 .btn {
-    display: inline-block;
-    padding: 13px 24px;
-    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 25px;
+    border-radius: 4px;
     font-weight: 700;
     transition: 0.3s ease;
 }
 
-.primary-btn {
+.btn-primary {
     background: #e5a33d;
-    color: #1b1110;
+    color: #160d0b;
 }
 
-.primary-btn:hover {
+.btn-primary:hover {
+    background: #f2bf5c;
     transform: translateY(-2px);
-    opacity: 0.9;
 }
 
-.secondary-btn {
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: #ffffff;
+.btn-outline {
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    color: #fff;
 }
 
-.secondary-btn:hover {
+.btn-outline:hover {
     border-color: #e5a33d;
     color: #e5a33d;
+    transform: translateY(-2px);
 }
 
-/* ==============================
-   Featured
-   ============================== */
 
-.featured {
-    padding: 100px 0;
+/* =========================================
+   INTRO
+   ========================================= */
+
+.intro-section {
+    padding: 95px 0 80px;
+    background: #fffaf5;
+    text-align: center;
+}
+
+.intro-content {
+    max-width: 780px;
+}
+
+.intro-content h2,
+.section-heading h2,
+.culture-content h2,
+.cta-section h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.1rem, 4vw, 3.4rem);
+    line-height: 1.2;
+    margin-bottom: 22px;
+    color: #241714;
+}
+
+.intro-content > p:last-child {
+    color: #6e625b;
+    font-size: 1.05rem;
+}
+
+
+/* =========================================
+   FEATURE SECTION
+   ========================================= */
+
+.features-section {
+    padding: 80px 0 100px;
+    background: #f7eee5;
 }
 
 .section-heading {
-    max-width: 700px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 50px;
     margin-bottom: 45px;
 }
 
-.section-heading h2,
-.about-box h2 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1.15;
-    margin-bottom: 15px;
-}
-
-.section-heading p:not(.eyebrow) {
-    color: #6f625a;
+.section-heading > p {
+    max-width: 430px;
+    color: #74665e;
 }
 
 .feature-grid {
@@ -186,148 +266,261 @@ nav a:hover {
 }
 
 .feature-card {
-    background: #ffffff;
+    background: #fff;
+    border: 1px solid #eadfd4;
+    min-height: 330px;
     padding: 32px;
-    border: 1px solid #eee1d5;
-    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     transition: 0.3s ease;
 }
 
 .feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 14px 35px rgba(49, 32, 22, 0.08);
+    transform: translateY(-7px);
+    border-color: #e5a33d;
+    box-shadow: 0 18px 40px rgba(56, 35, 23, 0.10);
 }
 
 .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 18px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff4dc;
+    border-radius: 50%;
+    font-size: 1.7rem;
 }
 
-.feature-card h3 {
-    font-size: 1.35rem;
-    margin-bottom: 10px;
-}
-
-.feature-card p {
-    color: #74675f;
-    margin-bottom: 20px;
-}
-
-.feature-card span,
-.text-link {
-    color: #9b651d;
+.card-number {
+    color: #c29a60;
+    font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
 }
 
-/* ==============================
-   About Preview
-   ============================== */
-
-.about-preview {
-    padding: 20px 0 100px;
+.feature-content h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.65rem;
+    margin-bottom: 12px;
 }
 
-.about-box {
-    background: #1b1110;
-    color: #ffffff;
-    border-radius: 14px;
-    padding: 60px;
-}
-
-.about-box h2 {
-    max-width: 650px;
-}
-
-.about-box > p:not(.eyebrow) {
-    max-width: 720px;
-    color: #d9ccc4;
+.feature-content p:not(.card-number) {
+    color: #74665e;
     margin-bottom: 22px;
 }
 
-/* ==============================
-   Footer
-   ============================== */
+.feature-content a,
+.text-link {
+    color: #a66a12;
+    font-weight: 700;
+}
+
+.feature-content a:hover,
+.text-link:hover {
+    color: #e09216;
+}
+
+
+/* =========================================
+   CULTURE SECTION
+   ========================================= */
+
+.culture-section {
+    padding: 105px 0;
+    background: #fffaf5;
+}
+
+.culture-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.culture-content > p:not(.section-label) {
+    max-width: 650px;
+    color: #6e625b;
+    margin-bottom: 28px;
+}
+
+.culture-highlight {
+    min-height: 310px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 45px;
+    background: #1b0e0b;
+    color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 20px 50px rgba(35, 17, 11, 0.18);
+}
+
+.highlight-symbol {
+    color: #e5a33d;
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.culture-highlight p {
+    max-width: 300px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.35rem;
+    line-height: 1.5;
+}
+
+
+/* =========================================
+   CTA
+   ========================================= */
+
+.cta-section {
+    padding: 95px 0;
+    background:
+        linear-gradient(
+            135deg,
+            #24110d,
+            #120908
+        );
+    color: #fff;
+    text-align: center;
+}
+
+.cta-section h2 {
+    color: #fff;
+}
+
+.cta-section > .container > p:not(.section-label) {
+    color: #d7cbc3;
+    margin-bottom: 30px;
+}
+
+
+/* =========================================
+   FOOTER
+   ========================================= */
 
 .site-footer {
-    background: #120b0a;
-    color: #d9ccc4;
+    background: #100807;
+    color: #d8cec8;
+    padding: 30px 0;
 }
 
 .footer-content {
-    min-height: 130px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 30px;
+    align-items: center;
+    gap: 25px;
 }
 
-.footer-content h3 {
-    color: #ffffff;
-    margin-bottom: 5px;
+.footer-logo {
+    color: #e5a33d;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.25rem;
+    font-weight: 700;
 }
 
 .footer-content p {
     font-size: 0.9rem;
+    color: #998d86;
 }
 
-/* ==============================
-   Mobile
-   ============================== */
 
-@media (max-width: 800px) {
+/* =========================================
+   RESPONSIVE
+   ========================================= */
 
-    .nav-container {
+@media (max-width: 850px) {
+
+    .nav-wrapper {
         flex-direction: column;
         justify-content: center;
-        padding: 18px 0;
+        padding: 20px 0;
     }
 
-    nav {
+    .main-nav {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 14px 18px;
+        gap: 15px 20px;
+    }
+
+    .main-nav a.active::after {
+        display: none;
     }
 
     .hero {
-        min-height: 560px;
+        min-height: 620px;
     }
 
     .hero-content {
         padding: 70px 0;
     }
 
+    .section-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 15px;
+    }
+
     .feature-grid {
         grid-template-columns: 1fr;
     }
 
-    .about-box {
-        padding: 40px 28px;
+    .culture-grid {
+        grid-template-columns: 1fr;
+        gap: 45px;
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    .container {
+        width: 90%;
+    }
+
+    .hero {
+        min-height: 600px;
+        background:
+            linear-gradient(
+                rgba(20, 9, 7, 0.80),
+                rgba(20, 9, 7, 0.92)
+            ),
+            url("../images/durga-puja/hero.jpg") center/cover no-repeat;
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+    }
+
+    .hero-description {
+        font-size: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .intro-section,
+    .culture-section {
+        padding: 70px 0;
+    }
+
+    .features-section {
+        padding: 70px 0;
+    }
+
+    .feature-card {
+        min-height: 300px;
+        padding: 27px;
     }
 
     .footer-content {
         flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 30px 0;
-    }
-}
-
-@media (max-width: 480px) {
-
-    .hero h1 {
-        font-size: 2.45rem;
-    }
-
-    .hero-text {
-        font-size: 1rem;
-    }
-
-    .hero-buttons {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .btn {
         text-align: center;
     }
 }
