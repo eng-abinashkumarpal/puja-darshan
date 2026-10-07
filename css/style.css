@@ -1,0 +1,333 @@
+/* ==============================
+   Puja Darshan - Main Styles
+   ============================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    background: #fffaf5;
+    color: #29231f;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.container {
+    width: min(1120px, 92%);
+    margin: 0 auto;
+}
+
+/* ==============================
+   Header
+   ============================== */
+
+.site-header {
+    background: #1b1110;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-container {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.logo span {
+    color: #e5a33d;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+nav a {
+    color: #f8eee5;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #e5a33d;
+}
+
+/* ==============================
+   Hero
+   ============================== */
+
+.hero {
+    min-height: 620px;
+    display: flex;
+    align-items: center;
+    background:
+        linear-gradient(
+            rgba(27, 17, 16, 0.78),
+            rgba(27, 17, 16, 0.88)
+        ),
+        url("../images/durga-puja/hero.jpg") center / cover no-repeat;
+    color: #ffffff;
+}
+
+.hero-content {
+    max-width: 780px;
+    padding: 90px 0;
+}
+
+.eyebrow {
+    color: #e5a33d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+
+.hero h1 {
+    max-width: 760px;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.05;
+    margin-bottom: 24px;
+}
+
+.hero h1 span {
+    color: #e5a33d;
+}
+
+.hero-text {
+    max-width: 650px;
+    color: #eadfd7;
+    font-size: 1.08rem;
+    margin-bottom: 34px;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 13px 24px;
+    border-radius: 6px;
+    font-weight: 700;
+    transition: 0.3s ease;
+}
+
+.primary-btn {
+    background: #e5a33d;
+    color: #1b1110;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.secondary-btn {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+.secondary-btn:hover {
+    border-color: #e5a33d;
+    color: #e5a33d;
+}
+
+/* ==============================
+   Featured
+   ============================== */
+
+.featured {
+    padding: 100px 0;
+}
+
+.section-heading {
+    max-width: 700px;
+    margin-bottom: 45px;
+}
+
+.section-heading h2,
+.about-box h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.15;
+    margin-bottom: 15px;
+}
+
+.section-heading p:not(.eyebrow) {
+    color: #6f625a;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.feature-card {
+    background: #ffffff;
+    padding: 32px;
+    border: 1px solid #eee1d5;
+    border-radius: 12px;
+    transition: 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 35px rgba(49, 32, 22, 0.08);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 18px;
+}
+
+.feature-card h3 {
+    font-size: 1.35rem;
+    margin-bottom: 10px;
+}
+
+.feature-card p {
+    color: #74675f;
+    margin-bottom: 20px;
+}
+
+.feature-card span,
+.text-link {
+    color: #9b651d;
+    font-weight: 700;
+}
+
+/* ==============================
+   About Preview
+   ============================== */
+
+.about-preview {
+    padding: 20px 0 100px;
+}
+
+.about-box {
+    background: #1b1110;
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 60px;
+}
+
+.about-box h2 {
+    max-width: 650px;
+}
+
+.about-box > p:not(.eyebrow) {
+    max-width: 720px;
+    color: #d9ccc4;
+    margin-bottom: 22px;
+}
+
+/* ==============================
+   Footer
+   ============================== */
+
+.site-footer {
+    background: #120b0a;
+    color: #d9ccc4;
+}
+
+.footer-content {
+    min-height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.footer-content h3 {
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+.footer-content p {
+    font-size: 0.9rem;
+}
+
+/* ==============================
+   Mobile
+   ============================== */
+
+@media (max-width: 800px) {
+
+    .nav-container {
+        flex-direction: column;
+        justify-content: center;
+        padding: 18px 0;
+    }
+
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px 18px;
+    }
+
+    .hero {
+        min-height: 560px;
+    }
+
+    .hero-content {
+        padding: 70px 0;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-box {
+        padding: 40px 28px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 30px 0;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .hero h1 {
+        font-size: 2.45rem;
+    }
+
+    .hero-text {
+        font-size: 1rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        text-align: center;
+    }
+}
