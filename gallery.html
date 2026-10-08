@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1165,5 +1164,140 @@
 
         /* =========================================
            CLOSE BUTTON
-        ============================
-```
+        ========================================= */
+
+        lightboxClose.addEventListener(
+            "click",
+            function () {
+
+                closeLightbox();
+
+            }
+        );
+
+
+        /* =========================================
+           CLICK OUTSIDE IMAGE
+        ========================================= */
+
+        lightbox.addEventListener(
+            "click",
+            function (event) {
+
+
+                if (
+                    event.target === lightbox
+                ) {
+
+                    closeLightbox();
+
+                }
+
+            }
+        );
+
+
+        /* =========================================
+           ESC KEY
+        ========================================= */
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+
+                if (
+                    event.key === "Escape"
+                ) {
+
+                    closeLightbox();
+
+                }
+
+
+                /* Keyboard + */
+
+                if (
+                    event.key === "+" ||
+                    event.key === "="
+                ) {
+
+                    if (
+                        lightbox.classList.contains(
+                            "active"
+                        )
+                    ) {
+
+                        if (
+                            zoomLevel < MAX_ZOOM
+                        ) {
+
+                            zoomLevel +=
+                                ZOOM_STEP;
+
+                            updateZoom();
+
+                        }
+
+                    }
+
+                }
+
+
+                /* Keyboard - */
+
+                if (
+                    event.key === "-"
+                ) {
+
+                    if (
+                        lightbox.classList.contains(
+                            "active"
+                        )
+                    ) {
+
+                        if (
+                            zoomLevel > MIN_ZOOM
+                        ) {
+
+                            zoomLevel -=
+                                ZOOM_STEP;
+
+                            updateZoom();
+
+                        }
+
+                    }
+
+                }
+
+
+                /* Keyboard 0 = Reset */
+
+                if (
+                    event.key === "0"
+                ) {
+
+                    if (
+                        lightbox.classList.contains(
+                            "active"
+                        )
+                    ) {
+
+                        zoomLevel = 1;
+
+                        updateZoom();
+
+                    }
+
+                }
+
+            }
+        );
+
+
+    </script>
+
+
+</body>
+</html>
