@@ -1,6 +1,8 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
 
     <meta name="viewport"
@@ -25,7 +27,9 @@
 
     <meta name="theme-color" content="#0b0b0b">
 
+
     <!-- Open Graph -->
+
     <meta property="og:title"
           content="Puja Gallery | Durga Puja 2026 Photos from Bangladesh">
 
@@ -40,8 +44,11 @@
     <meta property="og:image"
           content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
 
+
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
+
+    <meta name="twitter:card"
+          content="summary_large_image">
 
     <meta name="twitter:title"
           content="Puja Gallery | Durga Puja 2026 Photos">
@@ -52,17 +59,23 @@
     <meta name="twitter:image"
           content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
 
+
     <!-- Google Search Console -->
+
     <meta name="google-site-verification"
           content="OXlfqwXkfCByyqK5Fi5i3-eapEmmMOq6R30IqRdXxTI">
 
+
     <!-- Main Website CSS -->
-    <link rel="stylesheet" href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
 
     <style>
 
         /* =========================================
-           GALLERY PAGE
+           GALLERY INTRO
         ========================================= */
 
         .gallery-intro {
@@ -81,7 +94,10 @@
             margin: 0 auto;
         }
 
-        /* Masonry Gallery */
+
+        /* =========================================
+           MASONRY GALLERY
+        ========================================= */
 
         .gallery-masonry {
             column-count: 4;
@@ -104,6 +120,7 @@
             width: 100%;
             height: auto;
             border-radius: 16px;
+
             transition:
                 transform 0.4s ease,
                 filter 0.4s ease;
@@ -114,22 +131,32 @@
             filter: brightness(0.75);
         }
 
-        /* Hover Overlay */
+
+        /* =========================================
+           HOVER OVERLAY
+        ========================================= */
 
         .gallery-overlay {
             position: absolute;
             inset: 0;
+
             display: flex;
             align-items: flex-end;
             justify-content: center;
+
             padding: 20px;
+
             opacity: 0;
-            transition: opacity 0.3s ease;
-            background: linear-gradient(
-                to top,
-                rgba(0,0,0,0.65),
-                transparent 60%
-            );
+
+            transition:
+                opacity 0.3s ease;
+
+            background:
+                linear-gradient(
+                    to top,
+                    rgba(0,0,0,0.65),
+                    transparent 60%
+                );
         }
 
         .gallery-card:hover .gallery-overlay {
@@ -138,29 +165,40 @@
 
         .gallery-overlay span {
             color: #fff;
+
             font-size: 14px;
             font-weight: 600;
+
             letter-spacing: 0.5px;
         }
 
-        /* Loading */
+
+        /* =========================================
+           LOADING / MESSAGE
+        ========================================= */
 
         .gallery-status {
             text-align: center;
+
             padding: 50px 20px;
+
             font-size: 16px;
+
             opacity: 0.75;
+
             column-span: all;
         }
 
-        /* Empty / Error */
-
         .gallery-message {
             text-align: center;
+
             padding: 60px 20px;
+
             font-size: 16px;
+
             opacity: 0.75;
         }
+
 
         /* =========================================
            LIGHTBOX
@@ -168,68 +206,198 @@
 
         .lightbox {
             position: fixed;
+
             inset: 0;
-            background: rgba(0, 0, 0, 0.94);
+
+            background:
+                rgba(0, 0, 0, 0.95);
+
             display: none;
+
             align-items: center;
             justify-content: center;
+
             z-index: 9999;
-            padding: 25px;
+
+            padding: 20px;
+
+            overflow: hidden;
         }
 
         .lightbox.active {
             display: flex;
         }
 
+
+        /* =========================================
+           LIGHTBOX IMAGE CONTAINER
+        ========================================= */
+
+        .lightbox-image-container {
+            width: 100%;
+            height: 90vh;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+        }
+
+
+        /* =========================================
+           LIGHTBOX IMAGE
+        ========================================= */
+
         .lightbox img {
-            max-width: 95%;
-            max-height: 90vh;
+            max-width: 90%;
+            max-height: 85vh;
+
             width: auto;
             height: auto;
+
             object-fit: contain;
+
             border-radius: 10px;
-            box-shadow: 0 20px 70px rgba(0,0,0,0.5);
+
+            box-shadow:
+                0 20px 70px rgba(0,0,0,0.5);
+
+            transform:
+                scale(1);
+
+            transition:
+                transform 0.25s ease;
+
+            cursor: grab;
+
+            user-select: none;
+
+            -webkit-user-drag: none;
         }
+
+        .lightbox img:active {
+            cursor: grabbing;
+        }
+
+
+        /* =========================================
+           ZOOM CONTROLS
+        ========================================= */
+
+        .lightbox-controls {
+            position: absolute;
+
+            left: 25px;
+            top: 25px;
+
+            z-index: 10001;
+
+            display: flex;
+
+            gap: 8px;
+        }
+
+        .lightbox-controls button {
+            width: 42px;
+            height: 42px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,255,255,0.14);
+
+            color: #fff;
+
+            font-size: 24px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.25s ease,
+                transform 0.2s ease;
+        }
+
+        .lightbox-controls button:hover {
+            background:
+                rgba(255,255,255,0.28);
+
+            transform: scale(1.05);
+        }
+
+
+        /* =========================================
+           CLOSE BUTTON
+        ========================================= */
 
         .lightbox-close {
             position: absolute;
+
             top: 20px;
             right: 25px;
+
             width: 45px;
             height: 45px;
+
             border: none;
+
             border-radius: 50%;
-            background: rgba(255,255,255,0.12);
+
+            background:
+                rgba(255,255,255,0.12);
+
             color: #fff;
+
             font-size: 28px;
+
             line-height: 45px;
+
             text-align: center;
+
             cursor: pointer;
-            transition: background 0.3s ease;
+
+            z-index: 10001;
+
+            transition:
+                background 0.3s ease,
+                transform 0.2s ease;
         }
 
         .lightbox-close:hover {
-            background: rgba(255,255,255,0.25);
+            background:
+                rgba(255,255,255,0.25);
+
+            transform: scale(1.05);
         }
+
 
         /* =========================================
            MOBILE
         ========================================= */
 
         @media (max-width: 900px) {
+
             .gallery-masonry {
                 column-count: 3;
             }
+
         }
 
+
         @media (max-width: 650px) {
+
             .gallery-masonry {
                 column-count: 2;
+
                 column-gap: 12px;
             }
 
             .gallery-card {
                 margin-bottom: 12px;
+
                 border-radius: 12px;
             }
 
@@ -246,24 +414,49 @@
             }
 
             .lightbox {
-                padding: 15px;
+                padding: 10px;
+            }
+
+            .lightbox-image-container {
+                height: 85vh;
             }
 
             .lightbox img {
                 max-width: 100%;
-                max-height: 85vh;
+                max-height: 82vh;
+            }
+
+            .lightbox-controls {
+                left: 12px;
+                top: 12px;
+            }
+
+            .lightbox-controls button {
+                width: 38px;
+                height: 38px;
+
+                font-size: 22px;
             }
 
             .lightbox-close {
                 top: 12px;
                 right: 12px;
+
+                width: 40px;
+                height: 40px;
+
+                line-height: 40px;
             }
+
         }
 
     </style>
+
 </head>
 
+
 <body>
+
 
     <!-- =========================================
          HEADER
@@ -273,9 +466,14 @@
 
         <div class="container nav-container">
 
-            <a href="index.html" class="logo">
+
+            <a href="index.html"
+               class="logo">
+
                 Puja Darshan
+
             </a>
+
 
             <nav class="main-nav">
 
@@ -283,8 +481,11 @@
                     Home
                 </a>
 
-                <a href="gallery.html" class="active">
+                <a href="gallery.html"
+                   class="active">
+
                     Gallery
+
                 </a>
 
                 <a href="videos.html">
@@ -301,6 +502,7 @@
 
             </nav>
 
+
         </div>
 
     </header>
@@ -315,6 +517,7 @@
         <section class="page-section">
 
             <div class="container">
+
 
                 <!-- Gallery Introduction -->
 
@@ -333,7 +536,7 @@
                 </div>
 
 
-                <!-- Automatic Cloudinary Gallery -->
+                <!-- Cloudinary Gallery -->
 
                 <div id="cloudinary-gallery"
                      class="gallery-masonry">
@@ -346,6 +549,7 @@
                     </p>
 
                 </div>
+
 
             </div>
 
@@ -362,17 +566,62 @@
          class="lightbox"
          aria-hidden="true">
 
+
+        <!-- Zoom Controls -->
+
+        <div class="lightbox-controls">
+
+            <button id="zoom-out"
+                    aria-label="Zoom out"
+                    title="Zoom out">
+
+                −
+
+            </button>
+
+
+            <button id="zoom-reset"
+                    aria-label="Reset zoom"
+                    title="Reset zoom">
+
+                ↺
+
+            </button>
+
+
+            <button id="zoom-in"
+                    aria-label="Zoom in"
+                    title="Zoom in">
+
+                +
+
+            </button>
+
+        </div>
+
+
+        <!-- Close -->
+
         <button id="lightbox-close"
                 class="lightbox-close"
-                aria-label="Close photo">
+                aria-label="Close photo"
+                title="Close">
 
             &times;
 
         </button>
 
-        <img id="lightbox-image"
-             src=""
-             alt="Durga Puja photo">
+
+        <!-- Image -->
+
+        <div class="lightbox-image-container">
+
+            <img id="lightbox-image"
+                 src=""
+                 alt="Durga Puja photo">
+
+        </div>
+
 
     </div>
 
@@ -385,6 +634,7 @@
 
         <div class="container footer-content">
 
+
             <div>
 
                 <a href="index.html"
@@ -394,9 +644,11 @@
 
                 </a>
 
+
                 <p>
                     Durga Puja • Culture • Devotion
                 </p>
+
 
                 <p>
                     A digital platform documenting Durga Puja,
@@ -412,7 +664,9 @@
                     © 2026 Puja Darshan. All rights reserved.
                 </p>
 
+
                 <p>
+
                     Created &amp; Developed by
 
                     <a href="https://eng-abinashkumarpal.github.io/portfolio/"
@@ -427,260 +681,489 @@
 
             </div>
 
+
         </div>
 
     </footer>
 
 
     <!-- =========================================
-         CLOUDINARY GALLERY SCRIPT
+         CLOUDINARY + LIGHTBOX SCRIPT
     ========================================= -->
 
     <script>
 
-        const cloudName = "meqd4qpm";
 
-        const tag = "puja-darshan-gallery";
+        /* =========================================
+           CLOUDINARY SETTINGS
+        ========================================= */
+
+        const cloudName =
+            "meqd4qpm";
+
+        const tag =
+            "puja-darshan-gallery";
+
 
         const gallery =
-            document.getElementById("cloudinary-gallery");
+            document.getElementById(
+                "cloudinary-gallery"
+            );
+
 
         const status =
-            document.getElementById("gallery-status");
+            document.getElementById(
+                "gallery-status"
+            );
 
-
-        /*
-         * Cloudinary Resource List
-         */
 
         const listUrl =
             `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
 
 
-        /*
-         * Load Gallery
-         */
+        /* =========================================
+           LOAD PHOTOS
+        ========================================= */
 
         fetch(listUrl)
 
             .then(response => {
 
                 if (!response.ok) {
-                    throw new Error("Gallery could not be loaded.");
+
+                    throw new Error(
+                        "Gallery could not be loaded."
+                    );
+
                 }
 
                 return response.json();
 
             })
 
+
             .then(data => {
+
 
                 gallery.innerHTML = "";
 
-                if (!data.resources ||
-                    data.resources.length === 0) {
+
+                if (
+                    !data.resources ||
+                    data.resources.length === 0
+                ) {
 
                     gallery.innerHTML = `
+
                         <div class="gallery-message">
+
                             No photos available yet.
+
                         </div>
+
                     `;
 
                     return;
+
                 }
 
 
-                /*
-                 * Sort newest first
-                 */
+                /* Newest photos first */
 
-                data.resources.sort((a, b) => {
+                data.resources.sort(
+                    (a, b) => {
 
-                    return new Date(b.created_at) -
-                           new Date(a.created_at);
+                        return new Date(b.created_at) -
+                               new Date(a.created_at);
 
-                });
-
-
-                /*
-                 * Create Images
-                 */
-
-                data.resources.forEach((asset, index) => {
-
-                    const card =
-                        document.createElement("div");
-
-                    card.className =
-                        "gallery-card";
-
-
-                    const image =
-                        document.createElement("img");
-
-
-                    /*
-                     * Cloudinary optimized image
-                     */
-
-                    image.src =
-                        `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_900/${asset.public_id}`;
-
-
-                    image.alt =
-                        "Durga Puja celebration photo from Bangladesh";
-
-
-                    /*
-                     * First few images load immediately.
-                     * Remaining images use lazy loading.
-                     */
-
-                    if (index > 3) {
-                        image.loading = "lazy";
                     }
+                );
 
 
-                    image.decoding = "async";
+                /* Create gallery cards */
+
+                data.resources.forEach(
+                    (asset, index) => {
 
 
-                    const overlay =
-                        document.createElement("div");
-
-                    overlay.className =
-                        "gallery-overlay";
-
-
-                    overlay.innerHTML =
-                        "<span>View photo</span>";
-
-
-                    card.appendChild(image);
-
-                    card.appendChild(overlay);
-
-                    gallery.appendChild(card);
-
-
-                    /*
-                     * Lightbox
-                     */
-
-                    card.addEventListener(
-                        "click",
-                        function () {
-
-                            openLightbox(
-                                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`
+                        const card =
+                            document.createElement(
+                                "div"
                             );
 
-                        }
-                    );
 
-                });
+                        card.className =
+                            "gallery-card";
+
+
+                        const image =
+                            document.createElement(
+                                "img"
+                            );
+
+
+                        image.src =
+                            `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_900/${asset.public_id}`;
+
+
+                        image.alt =
+                            "Durga Puja celebration photo from Bangladesh";
+
+
+                        /* Lazy loading */
+
+                        if (index > 3) {
+
+                            image.loading =
+                                "lazy";
+
+                        }
+
+
+                        image.decoding =
+                            "async";
+
+
+                        const overlay =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        overlay.className =
+                            "gallery-overlay";
+
+
+                        overlay.innerHTML =
+                            "<span>View photo</span>";
+
+
+                        card.appendChild(
+                            image
+                        );
+
+
+                        card.appendChild(
+                            overlay
+                        );
+
+
+                        gallery.appendChild(
+                            card
+                        );
+
+
+                        /* Open lightbox */
+
+                        card.addEventListener(
+                            "click",
+                            function () {
+
+                                openLightbox(
+
+                                    `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`
+
+                                );
+
+                            }
+                        );
+
+
+                    }
+                );
+
 
             })
 
+
             .catch(error => {
+
 
                 console.error(error);
 
+
                 gallery.innerHTML = `
+
                     <div class="gallery-message">
+
                         Unable to load photos right now.
                         Please try again later.
+
                     </div>
+
                 `;
 
             });
 
 
-        /*
-         * =========================================
-         * LIGHTBOX FUNCTIONS
-         * =========================================
-         */
+
+        /* =========================================
+           LIGHTBOX ELEMENTS
+        ========================================= */
 
         const lightbox =
-            document.getElementById("lightbox");
+            document.getElementById(
+                "lightbox"
+            );
+
 
         const lightboxImage =
-            document.getElementById("lightbox-image");
+            document.getElementById(
+                "lightbox-image"
+            );
+
 
         const lightboxClose =
-            document.getElementById("lightbox-close");
+            document.getElementById(
+                "lightbox-close"
+            );
 
+
+        const zoomIn =
+            document.getElementById(
+                "zoom-in"
+            );
+
+
+        const zoomOut =
+            document.getElementById(
+                "zoom-out"
+            );
+
+
+        const zoomReset =
+            document.getElementById(
+                "zoom-reset"
+            );
+
+
+        /* =========================================
+           ZOOM VARIABLES
+        ========================================= */
+
+        let zoomLevel = 1;
+
+
+        const MIN_ZOOM =
+            1;
+
+
+        const MAX_ZOOM =
+            4;
+
+
+        const ZOOM_STEP =
+            0.25;
+
+
+        /* =========================================
+           UPDATE ZOOM
+        ========================================= */
+
+        function updateZoom() {
+
+            lightboxImage.style.transform =
+                `scale(${zoomLevel})`;
+
+        }
+
+
+        /* =========================================
+           OPEN LIGHTBOX
+        ========================================= */
 
         function openLightbox(imageUrl) {
 
-            lightboxImage.src = imageUrl;
 
-            lightbox.classList.add("active");
+            lightboxImage.src =
+                imageUrl;
+
+
+            zoomLevel = 1;
+
+
+            updateZoom();
+
+
+            lightbox.classList.add(
+                "active"
+            );
+
 
             lightbox.setAttribute(
                 "aria-hidden",
                 "false"
             );
 
-            document.body.style.overflow = "hidden";
+
+            document.body.style.overflow =
+                "hidden";
 
         }
 
 
+        /* =========================================
+           CLOSE LIGHTBOX
+        ========================================= */
+
         function closeLightbox() {
 
-            lightbox.classList.remove("active");
+
+            lightbox.classList.remove(
+                "active"
+            );
+
 
             lightbox.setAttribute(
                 "aria-hidden",
                 "true"
             );
 
-            lightboxImage.src = "";
 
-            document.body.style.overflow = "";
+            lightboxImage.src =
+                "";
+
+
+            zoomLevel = 1;
+
+
+            document.body.style.overflow =
+                "";
 
         }
 
 
-        lightboxClose.addEventListener(
+        /* =========================================
+           ZOOM IN
+        ========================================= */
+
+        zoomIn.addEventListener(
             "click",
-            closeLightbox
+            function (event) {
+
+                event.stopPropagation();
+
+
+                if (
+                    zoomLevel < MAX_ZOOM
+                ) {
+
+                    zoomLevel +=
+                        ZOOM_STEP;
+
+                    updateZoom();
+
+                }
+
+            }
         );
 
 
-        /*
-         * Close when clicking outside image
-         */
+        /* =========================================
+           ZOOM OUT
+        ========================================= */
+
+        zoomOut.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+
+                if (
+                    zoomLevel > MIN_ZOOM
+                ) {
+
+                    zoomLevel -=
+                        ZOOM_STEP;
+
+                    updateZoom();
+
+                }
+
+            }
+        );
+
+
+        /* =========================================
+           RESET ZOOM
+        ========================================= */
+
+        zoomReset.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+
+                zoomLevel = 1;
+
+
+                updateZoom();
+
+            }
+        );
+
+
+        /* =========================================
+           MOUSE WHEEL ZOOM
+        ========================================= */
 
         lightbox.addEventListener(
-            "click",
+            "wheel",
             function (event) {
 
-                if (event.target === lightbox) {
-                    closeLightbox();
+
+                if (
+                    !lightbox.classList.contains(
+                        "active"
+                    )
+                ) {
+
+                    return;
+
                 }
 
+
+                event.preventDefault();
+
+
+                if (event.deltaY < 0) {
+
+                    if (
+                        zoomLevel < MAX_ZOOM
+                    ) {
+
+                        zoomLevel +=
+                            ZOOM_STEP;
+
+                    }
+
+                } else {
+
+                    if (
+                        zoomLevel > MIN_ZOOM
+                    ) {
+
+                        zoomLevel -=
+                            ZOOM_STEP;
+
+                    }
+
+                }
+
+
+                updateZoom();
+
+
+            },
+            {
+                passive: false
             }
         );
 
 
-        /*
-         * Close with ESC
-         */
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (event.key === "Escape") {
-                    closeLightbox();
-                }
-
-            }
-        );
-
-    </script>
-
-</body>
-</html>
+        /* =========================================
+           CLOSE BUTTON
+        ============================
+```
