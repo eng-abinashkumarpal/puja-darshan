@@ -6,60 +6,338 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Photo Gallery | Puja Darshan</title>
+    <title>
+        Puja Darshan | Durga Puja Photos & Gallery
+    </title>
 
     <meta name="description"
-          content="Explore Durga Puja photos, mandir decorations and festive moments from Bangladesh with Puja Darshan.">
+          content="Explore beautiful Durga Puja photos, mandir decorations, cultural moments and festive celebrations from Bangladesh with Puja Darshan.">
 
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="keywords"
+          content="Puja Darshan, Durga Puja Bangladesh, Durga Puja photos, Durga Puja gallery, Puja mandir, Durga Puja 2026">
+
+    <meta name="author"
+          content="Puja Darshan">
+
+    <meta name="robots"
+          content="index, follow">
+
+    <link rel="canonical"
+          href="https://eng-abinashkumarpal.github.io/puja-darshan/gallery.html">
+
+    <meta name="theme-color"
+          content="#0b0b0b">
+
+    <!-- Open Graph -->
+    <meta property="og:title"
+          content="Puja Darshan | Durga Puja Photo Gallery">
+
+    <meta property="og:description"
+          content="Explore Durga Puja photos, mandir decorations and festive moments from Bangladesh.">
+
+    <meta property="og:type"
+          content="website">
+
+    <meta property="og:url"
+          content="https://eng-abinashkumarpal.github.io/puja-darshan/gallery.html">
+
+    <meta property="og:image"
+          content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card"
+          content="summary_large_image">
+
+    <meta name="twitter:title"
+          content="Puja Darshan | Durga Puja Photo Gallery">
+
+    <meta name="twitter:description"
+          content="Durga Puja photos, mandir decorations, culture and festive moments from Bangladesh.">
+
+    <meta name="twitter:image"
+          content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <style>
+
+        /* =========================================
+           GALLERY PAGE
+        ========================================= */
+
+        .gallery-page {
+            padding: 70px 0 90px;
+            background: #0b0b0b;
+            min-height: 70vh;
+        }
+
+        .gallery-heading {
+            text-align: center;
+            max-width: 760px;
+            margin: 0 auto 45px;
+        }
+
+        .gallery-heading h1 {
+            margin-bottom: 12px;
+        }
+
+        .gallery-heading p {
+            color: #bdbdbd;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /*
+         * Masonry layout
+         */
+        .gallery-grid {
+            columns: 4 250px;
+            column-gap: 18px;
+        }
+
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 18px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 14px;
+            background: #151515;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.30);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition:
+                transform 0.45s ease,
+                opacity 0.35s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.04);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(
+                    to top,
+                    rgba(0, 0, 0, 0.65),
+                    transparent 45%
+                );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: flex-end;
+            padding: 18px;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        .gallery-overlay span {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #gallery-status {
+            text-align: center;
+            color: #aaa;
+            padding: 30px 10px;
+            column-span: all;
+        }
+
+        .gallery-error {
+            text-align: center;
+            color: #ffb4b4;
+            padding: 30px 10px;
+            column-span: all;
+        }
+
+        /* =========================================
+           LIGHTBOX
+        ========================================= */
+
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.94);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            z-index: 9999;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-image {
+            max-width: 95vw;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.7);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 30px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media (max-width: 700px) {
+
+            .gallery-page {
+                padding: 45px 0 60px;
+            }
+
+            .gallery-heading {
+                margin-bottom: 30px;
+            }
+
+            .gallery-heading h1 {
+                font-size: 30px;
+            }
+
+            .gallery-heading p {
+                font-size: 14px;
+                padding: 0 10px;
+            }
+
+            .gallery-grid {
+                columns: 2 150px;
+                column-gap: 10px;
+            }
+
+            .gallery-item {
+                margin-bottom: 10px;
+                border-radius: 10px;
+            }
+
+            .gallery-overlay {
+                display: none;
+            }
+
+            .lightbox {
+                padding: 12px;
+            }
+
+            .lightbox-image {
+                max-width: 96vw;
+                max-height: 85vh;
+            }
+
+            .lightbox-close {
+                top: 12px;
+                right: 12px;
+            }
+        }
+
+    </style>
 </head>
 
 <body>
 
-<header class="site-header">
-    <div class="container nav-wrapper">
+    <!-- =========================================
+         HEADER
+    ========================================= -->
 
-        <a href="index.html" class="logo">
-            Puja Darshan
-        </a>
+    <header class="site-header">
 
-        <nav class="main-nav">
-            <a href="index.html">Home</a>
-            <a href="gallery.html">Photo Gallery</a>
-            <a href="videos.html">Videos</a>
-            <a href="about.html">About</a>
-            <a href="contact.html">Contact</a>
-        </nav>
-
-    </div>
-</header>
-
-<main>
-
-    <section class="page-hero">
         <div class="container">
 
-            <p class="eyebrow">
-                PUJA DARSHAN
-            </p>
+            <nav class="navbar">
 
-            <h1>
-                Photo Gallery
-            </h1>
+                <a href="index.html"
+                   class="logo">
+                    Puja Darshan
+                </a>
 
-            <p class="page-intro">
-                Durga Puja photos, mandir decorations and festive moments from Bangladesh.
-            </p>
+                <div class="nav-links">
+
+                    <a href="index.html">
+                        Home
+                    </a>
+
+                    <a href="gallery.html"
+                       class="active">
+                        Gallery
+                    </a>
+
+                    <a href="videos.html">
+                        Videos
+                    </a>
+
+                    <a href="about.html">
+                        About
+                    </a>
+
+                    <a href="contact.html">
+                        Contact
+                    </a>
+
+                </div>
+
+            </nav>
 
         </div>
-    </section>
 
-    <section class="gallery-section">
+    </header>
+
+
+    <!-- =========================================
+         GALLERY
+    ========================================= -->
+
+    <main class="gallery-page">
+
         <div class="container">
 
-            <div
-                id="cloudinary-gallery"
-                class="gallery-grid">
+            <div class="gallery-heading">
+
+                <h1>
+                    Durga Puja Photo Gallery
+                </h1>
+
+                <p>
+                    Explore Durga Puja celebrations, mandir decorations,
+                    cultural moments and festive memories from Bangladesh.
+                </p>
+
+            </div>
+
+
+            <!-- Cloudinary photos will appear here -->
+
+            <div id="cloudinary-gallery"
+                 class="gallery-grid">
 
                 <p id="gallery-status">
                     Loading photos...
@@ -68,163 +346,323 @@
             </div>
 
         </div>
-    </section>
 
-</main>
+    </main>
 
-<footer class="site-footer">
 
-    <div class="container footer-content">
+    <!-- =========================================
+         LIGHTBOX
+    ========================================= -->
 
-        <div>
+    <div id="lightbox"
+         class="lightbox">
 
-            <a href="index.html" class="footer-logo">
-                Puja Darshan
-            </a>
+        <button id="lightbox-close"
+                class="lightbox-close"
+                aria-label="Close image">
+            &times;
+        </button>
 
-            <p>
-                Durga Puja • Culture • Devotion
-            </p>
-
-            <p>
-                A digital platform documenting Durga Puja,
-                culture and festive moments from Bangladesh.
-            </p>
-
-        </div>
-
-        <div>
-
-            <p>
-                © 2026 Puja Darshan. All rights reserved.
-            </p>
-
-            <p>
-                Created &amp; Developed by
-
-                <a
-                    href="https://eng-abinashkumarpal.github.io/portfolio/"
-                    target="_blank"
-                    rel="noopener noreferrer">
-
-                    Abinash Kumar Pal
-
-                </a>
-
-            </p>
-
-        </div>
-
+        <img id="lightbox-image"
+             class="lightbox-image"
+             src=""
+             alt="Durga Puja photo">
     </div>
 
-</footer>
 
-<script>
+    <!-- =========================================
+         FOOTER
+    ========================================= -->
 
-const cloudName = "meqd4qpm";
+    <footer class="site-footer">
 
-const tag = "puja-darshan-gallery";
+        <div class="container footer-content">
 
-const listUrl =
-    `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+            <div>
 
-const gallery =
-    document.getElementById("cloudinary-gallery");
+                <a href="index.html"
+                   class="footer-logo">
+                    Puja Darshan
+                </a>
 
-const status =
-    document.getElementById("gallery-status");
+                <p>
+                    Durga Puja • Culture • Devotion
+                </p>
+
+                <p>
+                    A digital platform documenting Durga Puja,
+                    culture and festive moments from Bangladesh.
+                </p>
+
+            </div>
+
+            <div>
+
+                <p>
+                    © 2026 Puja Darshan.
+                    All rights reserved.
+                </p>
+
+                <p>
+                    Created &amp; Developed by
+
+                    <a href="https://eng-abinashkumarpal.github.io/portfolio/"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        Abinash Kumar Pal
+                    </a>
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </footer>
 
 
-fetch(listUrl)
+    <!-- =========================================
+         CLOUDINARY GALLERY SCRIPT
+    ========================================= -->
 
-    .then(response => {
+    <script>
 
-        if (!response.ok) {
-            throw new Error("Unable to load Cloudinary gallery.");
+        const cloudName = "meqd4qpm";
+
+        const tag = "puja-darshan-gallery";
+
+        const listUrl =
+            `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+
+        const gallery =
+            document.getElementById("cloudinary-gallery");
+
+        const status =
+            document.getElementById("gallery-status");
+
+
+        /*
+         * Load photos from Cloudinary
+         */
+
+        fetch(listUrl)
+
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Unable to load Cloudinary gallery."
+                    );
+                }
+
+                return response.json();
+
+            })
+
+            .then(data => {
+
+                gallery.innerHTML = "";
+
+                if (!data.resources ||
+                    data.resources.length === 0) {
+
+                    gallery.innerHTML =
+                        `<p id="gallery-status">
+                            No photos available yet.
+                         </p>`;
+
+                    return;
+                }
+
+
+                /*
+                 * Create gallery items
+                 */
+
+                data.resources.forEach((asset, index) => {
+
+                    const item =
+                        document.createElement("div");
+
+                    item.className =
+                        "gallery-item";
+
+
+                    const image =
+                        document.createElement("img");
+
+
+                    /*
+                     * Cloudinary optimized image
+                     */
+
+                    image.src =
+                        `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_900/${asset.public_id}`;
+
+
+                    image.alt =
+                        "Durga Puja photo from Bangladesh";
+
+
+                    image.loading =
+                        index < 4
+                            ? "eager"
+                            : "lazy";
+
+
+                    image.decoding =
+                        "async";
+
+
+                    /*
+                     * Overlay
+                     */
+
+                    const overlay =
+                        document.createElement("div");
+
+                    overlay.className =
+                        "gallery-overlay";
+
+
+                    const overlayText =
+                        document.createElement("span");
+
+                    overlayText.textContent =
+                        "View photo";
+
+
+                    overlay.appendChild(
+                        overlayText
+                    );
+
+
+                    item.appendChild(image);
+
+                    item.appendChild(overlay);
+
+                    gallery.appendChild(item);
+
+
+                    /*
+                     * Open lightbox
+                     */
+
+                    item.addEventListener(
+                        "click",
+                        function () {
+
+                            const fullImage =
+                                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`;
+
+                            openLightbox(
+                                fullImage
+                            );
+
+                        }
+                    );
+
+                });
+
+            })
+
+            .catch(error => {
+
+                console.error(error);
+
+                gallery.innerHTML =
+                    `<p class="gallery-error">
+                        Unable to load photos right now.
+                        Please try again later.
+                     </p>`;
+
+            });
+
+
+        /*
+         * =========================================
+         * LIGHTBOX FUNCTIONS
+         * =========================================
+         */
+
+        const lightbox =
+            document.getElementById("lightbox");
+
+        const lightboxImage =
+            document.getElementById("lightbox-image");
+
+        const lightboxClose =
+            document.getElementById("lightbox-close");
+
+
+        function openLightbox(imageUrl) {
+
+            lightboxImage.src =
+                imageUrl;
+
+            lightbox.classList.add(
+                "active"
+            );
+
+            document.body.style.overflow =
+                "hidden";
+
         }
 
-        return response.json();
 
-    })
+        function closeLightbox() {
 
-    .then(data => {
+            lightbox.classList.remove(
+                "active"
+            );
 
-        gallery.innerHTML = "";
+            lightboxImage.src =
+                "";
 
-        if (!data.resources || data.resources.length === 0) {
+            document.body.style.overflow =
+                "";
 
-            status.textContent =
-                "No photos uploaded yet.";
-
-            gallery.appendChild(status);
-
-            return;
         }
 
-        data.resources.forEach(asset => {
 
-            const item =
-                document.createElement("div");
+        lightboxClose.addEventListener(
+            "click",
+            closeLightbox
+        );
 
-            item.className =
-                "gallery-item";
 
-            const image =
-                document.createElement("img");
+        /*
+         * Close when clicking outside image
+         */
 
-            image.src =
-                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`;
+        lightbox.addEventListener(
+            "click",
+            function(event) {
 
-            image.alt =
-                asset.public_id
-                    .split("/")
-                    .pop()
-                    .replace(/_/g, " ");
+                if (event.target === lightbox) {
+                    closeLightbox();
+                }
 
-            image.loading =
-                "lazy";
+            }
+        );
 
-            const caption =
-                document.createElement("div");
 
-            caption.className =
-                "gallery-caption";
+        /*
+         * ESC key closes lightbox
+         */
 
-            const title =
-                document.createElement("h2");
+        document.addEventListener(
+            "keydown",
+            function(event) {
 
-            title.textContent =
-                image.alt;
+                if (event.key === "Escape") {
+                    closeLightbox();
+                }
 
-            caption.appendChild(title);
+            }
+        );
 
-            item.appendChild(image);
-
-            item.appendChild(caption);
-
-            gallery.appendChild(item);
-
-        });
-
-    })
-
-    .catch(error => {
-
-        console.error(error);
-
-        gallery.innerHTML = "";
-
-        const message =
-            document.createElement("p");
-
-        message.textContent =
-            "Unable to load photos right now. Please try again later.";
-
-        gallery.appendChild(message);
-
-    });
-
-</script>
+    </script>
 
 </body>
 </html>
