@@ -112,7 +112,7 @@ a {
             rgba(20, 9, 7, 0.78) 48%,
             rgba(20, 9, 7, 0.35) 100%
         ),
-        url("../images/durga-puja/hero.jpg") center/cover no-repeat;
+        url("../images/durga-puja/durga-puja-decoration-pandal-01.jpg") center/cover no-repeat;
 
     color: #fff;
 }
@@ -490,7 +490,7 @@ a {
                 rgba(20, 9, 7, 0.80),
                 rgba(20, 9, 7, 0.92)
             ),
-            url("../images/durga-puja/hero.jpg") center/cover no-repeat;
+            url("../images/durga-puja/durga-puja-decoration-pandal-01.jpg") center/cover no-repeat;
     }
 
     .hero h1 {
