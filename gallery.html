@@ -57,28 +57,13 @@
     <section class="gallery-section">
         <div class="container">
 
-            <div class="gallery-grid">
+            <div
+                id="cloudinary-gallery"
+                class="gallery-grid">
 
-                <div class="gallery-item">
-
-                    <img
-                        src="https://res.cloudinary.com/meqd4qpm/image/upload/f_auto,q_auto/Puja_Darshan_Goddess_Eye_Emblem_wjwonk"
-                        alt="Puja Darshan Goddess Eye Emblem"
-                        loading="lazy">
-
-                    <div class="gallery-caption">
-
-                        <h2>
-                            Puja Darshan Goddess Eye Emblem
-                        </h2>
-
-                        <p>
-                            Puja Darshan devotional artwork.
-                        </p>
-
-                    </div>
-
-                </div>
+                <p id="gallery-status">
+                    Loading photos...
+                </p>
 
             </div>
 
@@ -133,6 +118,113 @@
     </div>
 
 </footer>
+
+<script>
+
+const cloudName = "meqd4qpm";
+
+const tag = "puja-darshan-gallery";
+
+const listUrl =
+    `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+
+const gallery =
+    document.getElementById("cloudinary-gallery");
+
+const status =
+    document.getElementById("gallery-status");
+
+
+fetch(listUrl)
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error("Unable to load Cloudinary gallery.");
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        gallery.innerHTML = "";
+
+        if (!data.resources || data.resources.length === 0) {
+
+            status.textContent =
+                "No photos uploaded yet.";
+
+            gallery.appendChild(status);
+
+            return;
+        }
+
+        data.resources.forEach(asset => {
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "gallery-item";
+
+            const image =
+                document.createElement("img");
+
+            image.src =
+                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`;
+
+            image.alt =
+                asset.public_id
+                    .split("/")
+                    .pop()
+                    .replace(/_/g, " ");
+
+            image.loading =
+                "lazy";
+
+            const caption =
+                document.createElement("div");
+
+            caption.className =
+                "gallery-caption";
+
+            const title =
+                document.createElement("h2");
+
+            title.textContent =
+                image.alt;
+
+            caption.appendChild(title);
+
+            item.appendChild(image);
+
+            item.appendChild(caption);
+
+            gallery.appendChild(item);
+
+        });
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        gallery.innerHTML = "";
+
+        const message =
+            document.createElement("p");
+
+        message.textContent =
+            "Unable to load photos right now. Please try again later.";
+
+        gallery.appendChild(message);
+
+    });
+
+</script>
 
 </body>
 </html>
