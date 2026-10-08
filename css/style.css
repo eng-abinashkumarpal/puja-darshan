@@ -714,3 +714,435 @@ a {
     background: #f5f5f5;
 }
 
+
+/* =========================================
+   PUJA DARSHAN
+   ABOUT / VIDEOS / CONTACT / COMMON PAGES
+   ========================================= */
+
+/* ---------- COMMON INNER PAGE ---------- */
+
+.page-hero {
+    padding: 90px 0;
+    background: linear-gradient(135deg, #24110d, #120908);
+    color: #fff;
+}
+
+.page-hero .eyebrow {
+    margin-bottom: 15px;
+}
+
+.page-hero h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.page-hero h1 span {
+    color: #e5a33d;
+}
+
+.page-hero p {
+    max-width: 720px;
+    color: #d8cbc2;
+    font-size: 1.05rem;
+}
+
+
+/* ---------- ABOUT PAGE ---------- */
+
+.about-section {
+    padding: 90px 0 100px;
+    background: #fffaf5;
+}
+
+.about-content {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.about-content h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.2;
+    color: #241714;
+    margin-bottom: 20px;
+}
+
+.about-content h2 span {
+    color: #e5a33d;
+}
+
+.about-content p {
+    color: #6e625b;
+    font-size: 1.05rem;
+    margin-bottom: 22px;
+}
+
+.about-block {
+    margin-top: 60px;
+}
+
+.about-block h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.8rem;
+    color: #241714;
+    margin-bottom: 18px;
+}
+
+.about-block h3::after {
+    content: "";
+    display: block;
+    width: 55px;
+    height: 3px;
+    background: #e5a33d;
+    margin-top: 10px;
+}
+
+.about-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 25px;
+}
+
+.about-list li {
+    background: #fff;
+    border: 1px solid #eadfd4;
+    padding: 17px 20px;
+    color: #5f544d;
+    transition: 0.3s ease;
+}
+
+.about-list li::before {
+    content: "✦";
+    color: #e5a33d;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.about-list li:hover {
+    transform: translateY(-3px);
+    border-color: #e5a33d;
+    box-shadow: 0 10px 25px rgba(56, 35, 23, 0.08);
+}
+
+.about-vision {
+    margin-top: 60px;
+    padding: 45px;
+    background: #1b0e0b;
+    color: #fff;
+    border-left: 4px solid #e5a33d;
+}
+
+.about-vision h3 {
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.about-vision p {
+    color: #d8cbc2;
+    margin-bottom: 0;
+}
+
+
+/* ---------- VIDEO PAGE ---------- */
+
+.videos-section {
+    padding: 90px 0 105px;
+    background: #fffaf5;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.video-card {
+    background: #fff;
+    border: 1px solid #eadfd4;
+    overflow: hidden;
+    transition: 0.3s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-7px);
+    border-color: #e5a33d;
+    box-shadow: 0 18px 40px rgba(56, 35, 23, 0.12);
+}
+
+.video-thumbnail {
+    height: 230px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        linear-gradient(135deg, #f8e8d4, #fff6e9);
+    color: #9a671e;
+    position: relative;
+}
+
+.video-play {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5a33d;
+    color: #160d0b;
+    font-size: 1.7rem;
+    padding-left: 4px;
+    transition: 0.3s ease;
+}
+
+.video-card:hover .video-play {
+    transform: scale(1.1);
+    background: #f2bf5c;
+}
+
+.video-info {
+    padding: 25px;
+}
+
+.video-category {
+    color: #b47720;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.video-info h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.45rem;
+    color: #241714;
+    margin-bottom: 10px;
+}
+
+.video-info p {
+    color: #74665e;
+    font-size: 0.94rem;
+}
+
+.video-cta {
+    margin-top: 70px;
+    padding: 70px 30px;
+    background: #1b0e0b;
+    color: #fff;
+    text-align: center;
+}
+
+.video-cta h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    margin-bottom: 18px;
+}
+
+.video-cta h2 span {
+    color: #e5a33d;
+}
+
+.video-cta p {
+    max-width: 650px;
+    margin: 0 auto 28px;
+    color: #d7cbc3;
+}
+
+
+/* ---------- CONTACT PAGE ---------- */
+
+.contact-section {
+    padding: 90px 0 105px;
+    background: #fffaf5;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 30px;
+    align-items: stretch;
+}
+
+.contact-card {
+    background: #fff;
+    border: 1px solid #eadfd4;
+    padding: 40px;
+    transition: 0.3s ease;
+}
+
+.contact-card:hover {
+    border-color: #e5a33d;
+    box-shadow: 0 15px 35px rgba(56, 35, 23, 0.08);
+}
+
+.contact-card h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2rem;
+    color: #241714;
+    margin-bottom: 18px;
+}
+
+.contact-card h2 span {
+    color: #e5a33d;
+}
+
+.contact-card > p {
+    color: #6e625b;
+    margin-bottom: 25px;
+}
+
+.contact-item {
+    padding: 20px 0;
+    border-bottom: 1px solid #eee2d7;
+}
+
+.contact-item:last-child {
+    border-bottom: none;
+}
+
+.contact-item h3 {
+    font-size: 1rem;
+    color: #241714;
+    margin-bottom: 5px;
+}
+
+.contact-item p {
+    color: #74665e;
+    margin: 0;
+}
+
+.creator-card {
+    background: #1b0e0b;
+    color: #fff;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.creator-card .section-label {
+    color: #e5a33d;
+}
+
+.creator-card h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+}
+
+.creator-card p {
+    color: #d8cbc2;
+    margin-bottom: 22px;
+}
+
+.creator-name {
+    color: #e5a33d;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.contact-button {
+    margin-top: 20px;
+}
+
+
+/* ---------- COMMON TEXT / CTA ---------- */
+
+.page-intro {
+    max-width: 780px;
+    margin: 0 auto 55px;
+    text-align: center;
+}
+
+.page-intro h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    color: #241714;
+    margin-bottom: 18px;
+}
+
+.page-intro h2 span {
+    color: #e5a33d;
+}
+
+.page-intro p {
+    color: #74665e;
+    font-size: 1.05rem;
+}
+
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 850px) {
+
+    .about-section,
+    .videos-section,
+    .contact-section {
+        padding: 75px 0 85px;
+    }
+
+    .about-list {
+        grid-template-columns: 1fr;
+    }
+
+    .video-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-hero {
+        padding: 75px 0;
+    }
+}
+
+
+@media (max-width: 560px) {
+
+    .page-hero {
+        padding: 65px 0;
+    }
+
+    .page-hero h1 {
+        font-size: 2.8rem;
+    }
+
+    .about-section,
+    .videos-section,
+    .contact-section {
+        padding: 65px 0 75px;
+    }
+
+    .about-block {
+        margin-top: 45px;
+    }
+
+    .about-vision {
+        padding: 30px 25px;
+    }
+
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .video-thumbnail {
+        height: 220px;
+    }
+
+    .contact-card,
+    .creator-card {
+        padding: 30px 25px;
+    }
+
+    .video-cta {
+        margin-top: 50px;
+        padding: 55px 25px;
+    }
+}
