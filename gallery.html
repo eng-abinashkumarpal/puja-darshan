@@ -7,36 +7,32 @@
           content="width=device-width, initial-scale=1.0">
 
     <title>
-        Puja Darshan | Durga Puja Photos & Gallery
+        Puja Gallery | Durga Puja 2026 Photos from Bangladesh
     </title>
 
     <meta name="description"
-          content="Explore beautiful Durga Puja photos, mandir decorations, cultural moments and festive celebrations from Bangladesh with Puja Darshan.">
+          content="Explore Durga Puja 2026 photos, mandir decorations, cultural celebrations and festive moments from Bangladesh with Puja Darshan.">
 
     <meta name="keywords"
-          content="Puja Darshan, Durga Puja Bangladesh, Durga Puja photos, Durga Puja gallery, Puja mandir, Durga Puja 2026">
+          content="Puja Darshan, Durga Puja Bangladesh, Durga Puja 2026, Durga Puja photos, Puja gallery, Durga Puja mandir, Durga Puja celebration Bangladesh">
 
-    <meta name="author"
-          content="Puja Darshan">
+    <meta name="author" content="Puja Darshan">
 
-    <meta name="robots"
-          content="index, follow">
+    <meta name="robots" content="index, follow">
 
     <link rel="canonical"
           href="https://eng-abinashkumarpal.github.io/puja-darshan/gallery.html">
 
-    <meta name="theme-color"
-          content="#0b0b0b">
+    <meta name="theme-color" content="#0b0b0b">
 
     <!-- Open Graph -->
     <meta property="og:title"
-          content="Puja Darshan | Durga Puja Photo Gallery">
+          content="Puja Gallery | Durga Puja 2026 Photos from Bangladesh">
 
     <meta property="og:description"
-          content="Explore Durga Puja photos, mandir decorations and festive moments from Bangladesh.">
+          content="Explore Durga Puja photos, mandir decorations, cultural celebrations and festive moments from Bangladesh.">
 
-    <meta property="og:type"
-          content="website">
+    <meta property="og:type" content="website">
 
     <meta property="og:url"
           content="https://eng-abinashkumarpal.github.io/puja-darshan/gallery.html">
@@ -45,20 +41,23 @@
           content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
 
     <!-- Twitter -->
-    <meta name="twitter:card"
-          content="summary_large_image">
+    <meta name="twitter:card" content="summary_large_image">
 
     <meta name="twitter:title"
-          content="Puja Darshan | Durga Puja Photo Gallery">
+          content="Puja Gallery | Durga Puja 2026 Photos">
 
     <meta name="twitter:description"
-          content="Durga Puja photos, mandir decorations, culture and festive moments from Bangladesh.">
+          content="Durga Puja photos, mandir decorations and festive moments from Bangladesh.">
 
     <meta name="twitter:image"
           content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
 
-    <link rel="stylesheet"
-          href="css/style.css">
+    <!-- Google Search Console -->
+    <meta name="google-site-verification"
+          content="OXlfqwXkfCByyqK5Fi5i3-eapEmmMOq6R30IqRdXxTI">
+
+    <!-- Main Website CSS -->
+    <link rel="stylesheet" href="css/style.css">
 
     <style>
 
@@ -66,98 +65,101 @@
            GALLERY PAGE
         ========================================= */
 
-        .gallery-page {
-            padding: 70px 0 90px;
-            background: #0b0b0b;
-            min-height: 70vh;
-        }
-
-        .gallery-heading {
-            text-align: center;
+        .gallery-intro {
             max-width: 760px;
             margin: 0 auto 45px;
+            text-align: center;
         }
 
-        .gallery-heading h1 {
-            margin-bottom: 12px;
+        .gallery-intro h1 {
+            margin-bottom: 14px;
         }
 
-        .gallery-heading p {
-            color: #bdbdbd;
-            line-height: 1.7;
-            margin: 0;
+        .gallery-intro p {
+            line-height: 1.8;
+            opacity: 0.85;
+            margin: 0 auto;
         }
 
-        /*
-         * Masonry layout
-         */
-        .gallery-grid {
-            columns: 4 250px;
-            column-gap: 18px;
+        /* Masonry Gallery */
+
+        .gallery-masonry {
+            column-count: 4;
+            column-gap: 20px;
+            width: 100%;
         }
 
-        .gallery-item {
+        .gallery-card {
             break-inside: avoid;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             position: relative;
             overflow: hidden;
-            border-radius: 14px;
-            background: #151515;
+            border-radius: 16px;
             cursor: pointer;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.30);
+            background: #111;
         }
 
-        .gallery-item img {
+        .gallery-card img {
+            display: block;
             width: 100%;
             height: auto;
-            display: block;
+            border-radius: 16px;
             transition:
-                transform 0.45s ease,
-                opacity 0.35s ease;
+                transform 0.4s ease,
+                filter 0.4s ease;
         }
 
-        .gallery-item:hover img {
+        .gallery-card:hover img {
             transform: scale(1.04);
+            filter: brightness(0.75);
         }
+
+        /* Hover Overlay */
 
         .gallery-overlay {
             position: absolute;
             inset: 0;
-            background:
-                linear-gradient(
-                    to top,
-                    rgba(0, 0, 0, 0.65),
-                    transparent 45%
-                );
-            opacity: 0;
-            transition: opacity 0.3s ease;
             display: flex;
             align-items: flex-end;
-            padding: 18px;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: linear-gradient(
+                to top,
+                rgba(0,0,0,0.65),
+                transparent 60%
+            );
         }
 
-        .gallery-item:hover .gallery-overlay {
+        .gallery-card:hover .gallery-overlay {
             opacity: 1;
         }
 
         .gallery-overlay span {
-            color: #ffffff;
+            color: #fff;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        #gallery-status {
+        /* Loading */
+
+        .gallery-status {
             text-align: center;
-            color: #aaa;
-            padding: 30px 10px;
+            padding: 50px 20px;
+            font-size: 16px;
+            opacity: 0.75;
             column-span: all;
         }
 
-        .gallery-error {
+        /* Empty / Error */
+
+        .gallery-message {
             text-align: center;
-            color: #ffb4b4;
-            padding: 30px 10px;
-            column-span: all;
+            padding: 60px 20px;
+            font-size: 16px;
+            opacity: 0.75;
         }
 
         /* =========================================
@@ -171,86 +173,84 @@
             display: none;
             align-items: center;
             justify-content: center;
-            padding: 25px;
             z-index: 9999;
+            padding: 25px;
         }
 
         .lightbox.active {
             display: flex;
         }
 
-        .lightbox-image {
-            max-width: 95vw;
+        .lightbox img {
+            max-width: 95%;
             max-height: 90vh;
             width: auto;
             height: auto;
             object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 20px 70px rgba(0,0,0,0.5);
         }
 
         .lightbox-close {
             position: absolute;
-            top: 18px;
-            right: 22px;
+            top: 20px;
+            right: 25px;
             width: 45px;
             height: 45px;
             border: none;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            color: #ffffff;
-            font-size: 30px;
-            line-height: 1;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 28px;
+            line-height: 45px;
+            text-align: center;
             cursor: pointer;
+            transition: background 0.3s ease;
         }
 
         .lightbox-close:hover {
-            background: rgba(255, 255, 255, 0.22);
+            background: rgba(255,255,255,0.25);
         }
 
         /* =========================================
            MOBILE
         ========================================= */
 
-        @media (max-width: 700px) {
+        @media (max-width: 900px) {
+            .gallery-masonry {
+                column-count: 3;
+            }
+        }
 
-            .gallery-page {
-                padding: 45px 0 60px;
+        @media (max-width: 650px) {
+            .gallery-masonry {
+                column-count: 2;
+                column-gap: 12px;
             }
 
-            .gallery-heading {
-                margin-bottom: 30px;
+            .gallery-card {
+                margin-bottom: 12px;
+                border-radius: 12px;
             }
 
-            .gallery-heading h1 {
-                font-size: 30px;
-            }
-
-            .gallery-heading p {
-                font-size: 14px;
-                padding: 0 10px;
-            }
-
-            .gallery-grid {
-                columns: 2 150px;
-                column-gap: 10px;
-            }
-
-            .gallery-item {
-                margin-bottom: 10px;
-                border-radius: 10px;
+            .gallery-card img {
+                border-radius: 12px;
             }
 
             .gallery-overlay {
                 display: none;
             }
 
-            .lightbox {
-                padding: 12px;
+            .gallery-intro {
+                margin-bottom: 30px;
             }
 
-            .lightbox-image {
-                max-width: 96vw;
+            .lightbox {
+                padding: 15px;
+            }
+
+            .lightbox img {
+                max-width: 100%;
                 max-height: 85vh;
             }
 
@@ -271,39 +271,33 @@
 
     <header class="site-header">
 
-        <div class="container">
+        <div class="container nav-container">
 
-            <nav class="navbar">
+            <a href="index.html" class="logo">
+                Puja Darshan
+            </a>
 
-                <a href="index.html"
-                   class="logo">
-                    Puja Darshan
+            <nav class="main-nav">
+
+                <a href="index.html">
+                    Home
                 </a>
 
-                <div class="nav-links">
+                <a href="gallery.html" class="active">
+                    Gallery
+                </a>
 
-                    <a href="index.html">
-                        Home
-                    </a>
+                <a href="videos.html">
+                    Videos
+                </a>
 
-                    <a href="gallery.html"
-                       class="active">
-                        Gallery
-                    </a>
+                <a href="about.html">
+                    About
+                </a>
 
-                    <a href="videos.html">
-                        Videos
-                    </a>
-
-                    <a href="about.html">
-                        About
-                    </a>
-
-                    <a href="contact.html">
-                        Contact
-                    </a>
-
-                </div>
+                <a href="contact.html">
+                    Contact
+                </a>
 
             </nav>
 
@@ -313,39 +307,49 @@
 
 
     <!-- =========================================
-         GALLERY
+         MAIN CONTENT
     ========================================= -->
 
-    <main class="gallery-page">
+    <main>
 
-        <div class="container">
+        <section class="page-section">
 
-            <div class="gallery-heading">
+            <div class="container">
 
-                <h1>
-                    Durga Puja Photo Gallery
-                </h1>
+                <!-- Gallery Introduction -->
 
-                <p>
-                    Explore Durga Puja celebrations, mandir decorations,
-                    cultural moments and festive memories from Bangladesh.
-                </p>
+                <div class="gallery-intro">
+
+                    <h1>
+                        Durga Puja Gallery
+                    </h1>
+
+                    <p>
+                        Explore beautiful moments from Durga Puja celebrations,
+                        mandir decorations, cultural programs and festive
+                        activities from Bangladesh.
+                    </p>
+
+                </div>
+
+
+                <!-- Automatic Cloudinary Gallery -->
+
+                <div id="cloudinary-gallery"
+                     class="gallery-masonry">
+
+                    <p id="gallery-status"
+                       class="gallery-status">
+
+                        Loading photos...
+
+                    </p>
+
+                </div>
 
             </div>
 
-
-            <!-- Cloudinary photos will appear here -->
-
-            <div id="cloudinary-gallery"
-                 class="gallery-grid">
-
-                <p id="gallery-status">
-                    Loading photos...
-                </p>
-
-            </div>
-
-        </div>
+        </section>
 
     </main>
 
@@ -355,18 +359,21 @@
     ========================================= -->
 
     <div id="lightbox"
-         class="lightbox">
+         class="lightbox"
+         aria-hidden="true">
 
         <button id="lightbox-close"
                 class="lightbox-close"
-                aria-label="Close image">
+                aria-label="Close photo">
+
             &times;
+
         </button>
 
         <img id="lightbox-image"
-             class="lightbox-image"
              src=""
              alt="Durga Puja photo">
+
     </div>
 
 
@@ -382,7 +389,9 @@
 
                 <a href="index.html"
                    class="footer-logo">
+
                     Puja Darshan
+
                 </a>
 
                 <p>
@@ -396,11 +405,11 @@
 
             </div>
 
+
             <div>
 
                 <p>
-                    © 2026 Puja Darshan.
-                    All rights reserved.
+                    © 2026 Puja Darshan. All rights reserved.
                 </p>
 
                 <p>
@@ -409,7 +418,9 @@
                     <a href="https://eng-abinashkumarpal.github.io/portfolio/"
                        target="_blank"
                        rel="noopener noreferrer">
+
                         Abinash Kumar Pal
+
                     </a>
 
                 </p>
@@ -431,9 +442,6 @@
 
         const tag = "puja-darshan-gallery";
 
-        const listUrl =
-            `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
-
         const gallery =
             document.getElementById("cloudinary-gallery");
 
@@ -442,7 +450,15 @@
 
 
         /*
-         * Load photos from Cloudinary
+         * Cloudinary Resource List
+         */
+
+        const listUrl =
+            `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+
+
+        /*
+         * Load Gallery
          */
 
         fetch(listUrl)
@@ -450,9 +466,7 @@
             .then(response => {
 
                 if (!response.ok) {
-                    throw new Error(
-                        "Unable to load Cloudinary gallery."
-                    );
+                    throw new Error("Gallery could not be loaded.");
                 }
 
                 return response.json();
@@ -466,26 +480,39 @@
                 if (!data.resources ||
                     data.resources.length === 0) {
 
-                    gallery.innerHTML =
-                        `<p id="gallery-status">
+                    gallery.innerHTML = `
+                        <div class="gallery-message">
                             No photos available yet.
-                         </p>`;
+                        </div>
+                    `;
 
                     return;
                 }
 
 
                 /*
-                 * Create gallery items
+                 * Sort newest first
+                 */
+
+                data.resources.sort((a, b) => {
+
+                    return new Date(b.created_at) -
+                           new Date(a.created_at);
+
+                });
+
+
+                /*
+                 * Create Images
                  */
 
                 data.resources.forEach((asset, index) => {
 
-                    const item =
+                    const card =
                         document.createElement("div");
 
-                    item.className =
-                        "gallery-item";
+                    card.className =
+                        "gallery-card";
 
 
                     const image =
@@ -501,22 +528,21 @@
 
 
                     image.alt =
-                        "Durga Puja photo from Bangladesh";
-
-
-                    image.loading =
-                        index < 4
-                            ? "eager"
-                            : "lazy";
-
-
-                    image.decoding =
-                        "async";
+                        "Durga Puja celebration photo from Bangladesh";
 
 
                     /*
-                     * Overlay
+                     * First few images load immediately.
+                     * Remaining images use lazy loading.
                      */
+
+                    if (index > 3) {
+                        image.loading = "lazy";
+                    }
+
+
+                    image.decoding = "async";
+
 
                     const overlay =
                         document.createElement("div");
@@ -525,38 +551,27 @@
                         "gallery-overlay";
 
 
-                    const overlayText =
-                        document.createElement("span");
-
-                    overlayText.textContent =
-                        "View photo";
+                    overlay.innerHTML =
+                        "<span>View photo</span>";
 
 
-                    overlay.appendChild(
-                        overlayText
-                    );
+                    card.appendChild(image);
 
+                    card.appendChild(overlay);
 
-                    item.appendChild(image);
-
-                    item.appendChild(overlay);
-
-                    gallery.appendChild(item);
+                    gallery.appendChild(card);
 
 
                     /*
-                     * Open lightbox
+                     * Lightbox
                      */
 
-                    item.addEventListener(
+                    card.addEventListener(
                         "click",
                         function () {
 
-                            const fullImage =
-                                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`;
-
                             openLightbox(
-                                fullImage
+                                `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`
                             );
 
                         }
@@ -570,11 +585,12 @@
 
                 console.error(error);
 
-                gallery.innerHTML =
-                    `<p class="gallery-error">
+                gallery.innerHTML = `
+                    <div class="gallery-message">
                         Unable to load photos right now.
                         Please try again later.
-                     </p>`;
+                    </div>
+                `;
 
             });
 
@@ -597,30 +613,32 @@
 
         function openLightbox(imageUrl) {
 
-            lightboxImage.src =
-                imageUrl;
+            lightboxImage.src = imageUrl;
 
-            lightbox.classList.add(
-                "active"
+            lightbox.classList.add("active");
+
+            lightbox.setAttribute(
+                "aria-hidden",
+                "false"
             );
 
-            document.body.style.overflow =
-                "hidden";
+            document.body.style.overflow = "hidden";
 
         }
 
 
         function closeLightbox() {
 
-            lightbox.classList.remove(
-                "active"
+            lightbox.classList.remove("active");
+
+            lightbox.setAttribute(
+                "aria-hidden",
+                "true"
             );
 
-            lightboxImage.src =
-                "";
+            lightboxImage.src = "";
 
-            document.body.style.overflow =
-                "";
+            document.body.style.overflow = "";
 
         }
 
@@ -637,7 +655,7 @@
 
         lightbox.addEventListener(
             "click",
-            function(event) {
+            function (event) {
 
                 if (event.target === lightbox) {
                     closeLightbox();
@@ -648,12 +666,12 @@
 
 
         /*
-         * ESC key closes lightbox
+         * Close with ESC
          */
 
         document.addEventListener(
             "keydown",
-            function(event) {
+            function (event) {
 
                 if (event.key === "Escape") {
                     closeLightbox();
