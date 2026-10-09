@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Durga Puja Directory | Puja Darshan Bangladesh 2026</title>
+
+    <meta name="description"
+        content="Explore Durga Puja celebrations across Bangladesh. Discover puja locations, districts, years and community celebrations with Puja Darshan.">
+
+    <meta name="keywords"
+        content="Durga Puja Bangladesh, Durga Puja directory, Puja Darshan, Durga Puja 2026, puja locations Bangladesh, Durga Puja mandir">
+
+    <meta name="author" content="Puja Darshan">
+    <meta name="robots" content="index, follow">
+
+    <link rel="canonical"
+        href="https://eng-abinashkumarpal.github.io/puja-darshan/puja-directory.html">
+
+    <meta name="theme-color" content="#0b0b0b">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title"
+        content="Durga Puja Directory | Puja Darshan Bangladesh">
+    <meta property="og:description"
+        content="Discover Durga Puja celebrations and locations across Bangladesh.">
+    <meta property="og:url"
+        content="https://eng-abinashkumarpal.github.io/puja-darshan/puja-directory.html">
+    <meta property="og:site_name" content="Puja Darshan">
+    <meta property="og:image"
+        content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title"
+        content="Durga Puja Directory | Puja Darshan">
+    <meta name="twitter:description"
+        content="Find Durga Puja celebrations across Bangladesh.">
+    <meta name="twitter:image"
+        content="https://eng-abinashkumarpal.github.io/puja-darshan/images/og-image.png">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* =========================================
+           PUJA DIRECTORY
+        ========================================= */
+
+        .directory-section {
+            padding: 80px 0;
+        }
+
+        .directory-intro {
+            max-width: 780px;
+            margin: 0 auto 45px;
+            text-align: center;
+        }
+
+        .directory-intro h1 {
+            margin-bottom: 16px;
+        }
+
+        .directory-intro p {
+            line-height: 1.8;
+            opacity: 0.85;
+        }
+
+        /* Filters */
+
+        .directory-filters {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 45px;
+        }
+
+        .directory-filters input,
+        .directory-filters select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            background: #17100e;
+            color: #fff;
+            font: inherit;
+            outline: none;
+        }
+
+        .directory-filters input:focus,
+        .directory-filters select:focus {
+            border-color: #f4c76a;
+            box-shadow: 0 0 0 2px rgba(244, 199, 106, 0.12);
+        }
+
+        .directory-filters option {
+            background: #17100e;
+            color: #fff;
+        }
+
+        /* Cards */
+
+        .puja-directory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .puja-card {
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            background: #17100e;
+            transition:
+                transform 0.3s ease,
+                border-color 0.3s ease;
+        }
+
+        .puja-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(244, 199, 106, 0.5);
+        }
+
+        .puja-card-image {
+            height: 210px;
+            overflow: hidden;
+            background: #211513;
+        }
+
+        .puja-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .puja-card:hover .puja-card-image img {
+            transform: scale(1.04);
+        }
+
+        .puja-card-content {
+            padding: 22px;
+        }
+
+        .puja-card-year {
+            margin: 0 0 8px;
+            color: #f4c76a;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .puja-card h2 {
+            margin: 0 0 10px;
+            font-size: 1.3rem;
+        }
+
+        .puja-location {
+            margin: 0 0 12px;
+            opacity: 0.8;
+        }
+
+        .puja-description {
+            margin: 0;
+            line-height: 1.7;
+            opacity: 0.75;
+        }
+
+        .directory-status {
+            margin: 0 0 25px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .directory-empty {
+            display: none;
+            padding: 50px 20px;
+            text-align: center;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            opacity: 0.75;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 850px) {
+            .directory-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .puja-directory-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 520px) {
+            .directory-section {
+                padding: 60px 0;
+            }
+
+            .puja-directory-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .puja-card-image {
+                height: 220px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="site-header">
+
+    <div class="container nav-wrapper">
+
+        <a href="index.html" class="logo" aria-label="Puja Darshan Home">
+            <span class="logo-symbol">ॐ</span>
+            <span>Puja Darshan</span>
+        </a>
+
+        <button class="menu-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="main-navigation">
+            <span class="menu-toggle-label">Menu</span>
+            <span aria-hidden="true">☰</span>
+        </button>
+
+        <nav class="main-nav"
+             id="main-navigation"
+             aria-label="Main navigation">
+
+            <a href="index.html">Home</a>
+            <a href="puja-directory.html"
+               class="active"
+               aria-current="page">
+                Puja Directory
+            </a>
+            <a href="gallery.html">Photo Gallery</a>
+            <a href="videos.html">Videos</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+
+        </nav>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <!-- Directory Hero -->
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <p class="eyebrow">
+                PUJA DARSHAN • BANGLADESH
+            </p>
+
+            <h1>
+                Durga Puja
+                <span>Directory</span>
+            </h1>
+
+            <p class="page-intro">
+                Discover Durga Puja celebrations, locations and
+                community events across Bangladesh.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Directory -->
+
+    <section class="directory-section">
+
+        <div class="container">
+
+            <div class="directory-intro">
+
+                <h2>
+                    Find a
+                    <span>Puja</span>
+                </h2>
+
+                <p>
+                    Search by puja name, district or year to explore
+                    celebrations documented by Puja Darshan.
+                </p>
+
+            </div>
+
+
+            <!-- Filters -->
+
+            <div class="directory-filters">
+
+                <input
+                    type="search"
+                    id="puja-search"
+                    placeholder="Search puja name or location..."
+                    aria-label="Search Puja">
+
+                <select id="district-filter"
+                        aria-label="Filter by district">
+
+                    <option value="">All Districts</option>
+                    <option value="Dhaka">Dhaka</option>
+                    <option value="Faridpur">Faridpur</option>
+                    <option value="Chattogram">Chattogram</option>
+                    <option value="Khulna">Khulna</option>
+                    <option value="Rajshahi">Rajshahi</option>
+
+                </select>
+
+                <select id="year-filter"
+                        aria-label="Filter by year">
+
+                    <option value="">All Years</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+
+                </select>
+
+            </div>
+
+
+            <p class="directory-status"
+               id="directory-status"
+               aria-live="polite">
+                Showing 6 puja listings
+            </p>
+
+
+            <!-- Puja Cards -->
+
+            <div class="puja-directory-grid"
+                 id="puja-directory-grid">
+
+
+                <article class="puja-card"
+                         data-name="Dhakeshwari Durga Puja"
+                         data-district="Dhaka"
+                         data-year="2026">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Dhaka"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2026
+                        </p>
+
+                        <h2>
+                            Dhakeshwari Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Dhaka
+                        </p>
+
+                        <p class="puja-description">
+                            A sample directory listing for a
+                            Durga Puja celebration in Dhaka.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="puja-card"
+                         data-name="Faridpur Durga Puja"
+                         data-district="Faridpur"
+                         data-year="2026">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Faridpur"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2026
+                        </p>
+
+                        <h2>
+                            Faridpur Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Faridpur
+                        </p>
+
+                        <p class="puja-description">
+                            A sample listing representing a
+                            community Durga Puja celebration.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="puja-card"
+                         data-name="Chattogram Durga Puja"
+                         data-district="Chattogram"
+                         data-year="2026">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Chattogram"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2026
+                        </p>
+
+                        <h2>
+                            Chattogram Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Chattogram
+                        </p>
+
+                        <p class="puja-description">
+                            A sample listing representing a
+                            Durga Puja celebration in Chattogram.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="puja-card"
+                         data-name="Dhaka Durga Puja 2025"
+                         data-district="Dhaka"
+                         data-year="2025">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Dhaka"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2025
+                        </p>
+
+                        <h2>
+                            Dhaka Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Dhaka
+                        </p>
+
+                        <p class="puja-description">
+                            A sample archive listing for
+                            Durga Puja 2025.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="puja-card"
+                         data-name="Khulna Durga Puja"
+                         data-district="Khulna"
+                         data-year="2026">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Khulna"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2026
+                        </p>
+
+                        <h2>
+                            Khulna Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Khulna
+                        </p>
+
+                        <p class="puja-description">
+                            A sample listing representing a
+                            Durga Puja celebration in Khulna.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <article class="puja-card"
+                         data-name="Rajshahi Durga Puja"
+                         data-district="Rajshahi"
+                         data-year="2026">
+
+                    <div class="puja-card-image">
+                        <img
+                            src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                            alt="Durga Puja celebration in Rajshahi"
+                            loading="lazy">
+                    </div>
+
+                    <div class="puja-card-content">
+
+                        <p class="puja-card-year">
+                            DURGA PUJA • 2026
+                        </p>
+
+                        <h2>
+                            Rajshahi Durga Puja
+                        </h2>
+
+                        <p class="puja-location">
+                            📍 Rajshahi
+                        </p>
+
+                        <p class="puja-description">
+                            A sample listing representing a
+                            Durga Puja celebration in Rajshahi.
+                        </p>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <div class="directory-empty"
+                 id="directory-empty">
+
+                <h2>No Puja Found</h2>
+
+                <p>
+                    Try a different search term, district or year.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="js/script.js"></script>
+
+<script>
+
+    const searchInput =
+        document.getElementById("puja-search");
+
+    const districtFilter =
+        document.getElementById("district-filter");
+
+    const yearFilter =
+        document.getElementById("year-filter");
+
+    const pujaCards =
+        document.querySelectorAll(".puja-card");
+
+    const status =
+        document.getElementById("directory-status");
+
+    const emptyMessage =
+        document.getElementById("directory-empty");
+
+
+    function filterPujas() {
+
+        const search =
+            searchInput.value.toLowerCase().trim();
+
+        const district =
+            districtFilter.value;
+
+        const year =
+            yearFilter.value;
+
+        let visibleCount = 0;
+
+
+        pujaCards.forEach(card => {
+
+            const name =
+                card.dataset.name.toLowerCase();
+
+            const cardDistrict =
+                card.dataset.district;
+
+            const cardYear =
+                card.dataset.year;
+
+
+            const matchesSearch =
+                !search ||
+                name.includes(search);
+
+            const matchesDistrict =
+                !district ||
+                cardDistrict === district;
+
+            const matchesYear =
+                !year ||
+                cardYear === year;
+
+
+            const shouldShow =
+                matchesSearch &&
+                matchesDistrict &&
+                matchesYear;
+
+
+            card.style.display =
+                shouldShow ? "" : "none";
+
+
+            if (shouldShow) {
+                visibleCount++;
+            }
+
+        });
+
+
+        status.textContent =
+            `Showing ${visibleCount} puja listing${visibleCount === 1 ? "" : "s"}`;
+
+        emptyMessage.style.display =
+            visibleCount === 0 ? "block" : "none";
+
+    }
+
+
+    searchInput.addEventListener(
+        "input",
+        filterPujas
+    );
+
+    districtFilter.addEventListener(
+        "change",
+        filterPujas
+    );
+
+    yearFilter.addEventListener(
+        "change",
+        filterPujas
+    );
+
+</script>
+
+</body>
+</html>
