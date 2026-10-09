@@ -1,0 +1,448 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mandir Directory Bangladesh | Puja Darshan</title>
+    <meta name="description" content="Explore Hindu temples and mandirs in Bangladesh with Puja Darshan. Search temple listings by name, district and location.">
+    <meta name="author" content="Puja Darshan">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0b0b0b">
+
+    <link rel="canonical" href="https://eng-abinashkumarpal.github.io/puja-darshan/mandir-directory.html">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .directory-section {
+            padding: 75px 0;
+        }
+
+        .directory-intro {
+            max-width: 760px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .directory-intro h2 {
+            margin-bottom: 12px;
+        }
+
+        .directory-intro p {
+            line-height: 1.8;
+            opacity: .8;
+        }
+
+        .directory-filters {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .directory-filters input,
+        .directory-filters select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 10px;
+            background: #17100e;
+            color: #fff;
+            font: inherit;
+        }
+
+        .directory-filters input:focus,
+        .directory-filters select:focus {
+            outline: 2px solid #f4c76a;
+            outline-offset: 2px;
+        }
+
+        .directory-filters option {
+            background: #17100e;
+            color: #fff;
+        }
+
+        .mandir-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .mandir-card {
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 16px;
+            background: #17100e;
+            transition: transform .25s ease, border-color .25s ease;
+        }
+
+        .mandir-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(244,199,106,.55);
+        }
+
+        .mandir-card img {
+            display: block;
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            background: #211513;
+        }
+
+        .mandir-card-content {
+            padding: 22px;
+        }
+
+        .mandir-label {
+            margin: 0 0 9px;
+            color: #f4c76a;
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .mandir-card h2 {
+            margin: 0 0 12px;
+            font-size: 1.25rem;
+        }
+
+        .mandir-location {
+            margin: 0 0 12px;
+            opacity: .85;
+        }
+
+        .mandir-description {
+            margin: 0;
+            line-height: 1.7;
+            opacity: .75;
+        }
+
+        .directory-status {
+            text-align: center;
+            margin: 0 0 25px;
+            opacity: .75;
+        }
+
+        .directory-empty {
+            display: none;
+            padding: 40px 20px;
+            text-align: center;
+            border: 1px dashed rgba(255,255,255,.2);
+            border-radius: 14px;
+        }
+
+        .directory-note {
+            margin-top: 35px;
+            font-size: .9rem;
+            line-height: 1.7;
+            opacity: .7;
+        }
+
+        .directory-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 35px;
+        }
+
+        .directory-links a {
+            color: #f4c76a;
+            text-decoration: none;
+            border: 1px solid rgba(244,199,106,.4);
+            padding: 12px 18px;
+            border-radius: 9px;
+        }
+
+        .directory-links a:hover {
+            background: rgba(244,199,106,.1);
+        }
+
+        @media (max-width: 850px) {
+            .mandir-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .directory-filters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .directory-section {
+                padding: 50px 0;
+            }
+
+            .mandir-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mandir-card img {
+                height: 220px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrapper">
+
+        <a href="index.html" class="logo" aria-label="Puja Darshan Home">
+            <span class="logo-symbol">ॐ</span>
+            <span>Puja Darshan</span>
+        </a>
+
+        <button class="menu-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="main-navigation">
+            <span class="menu-toggle-label">Menu</span>
+            <span aria-hidden="true">☰</span>
+        </button>
+
+        <nav class="main-nav"
+             id="main-navigation"
+             aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="puja-directory.html">Puja Directory</a>
+            <a href="mandir-directory.html"
+               class="active"
+               aria-current="page">Mandir Directory</a>
+            <a href="gallery.html">Photo Gallery</a>
+            <a href="videos.html">Videos</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+
+    </div>
+</header>
+
+<main>
+
+    <section class="page-hero">
+        <div class="container">
+            <p class="eyebrow">PUJA DARSHAN • BANGLADESH</p>
+            <h1>Explore Hindu <span>Mandirs</span></h1>
+            <p class="page-intro">
+                Discover temple listings, explore locations and
+                learn about the cultural heritage of Bangladesh.
+            </p>
+        </div>
+    </section>
+
+    <section class="directory-section">
+        <div class="container">
+
+            <div class="directory-intro">
+                <h2>Find a <span>Mandir</span></h2>
+                <p>
+                    Search by temple name, address or district.
+                    Listings will be expanded as information is collected
+                    and verified.
+                </p>
+            </div>
+
+            <div class="directory-filters">
+                <input
+                    type="search"
+                    id="mandir-search"
+                    placeholder="Search mandir name or location..."
+                    aria-label="Search mandirs">
+
+                <select id="district-filter" aria-label="Filter by district">
+                    <option value="">All Districts</option>
+                    <option value="Dhaka">Dhaka</option>
+                    <option value="Faridpur">Faridpur</option>
+                    <option value="Chattogram">Chattogram</option>
+                    <option value="Khulna">Khulna</option>
+                    <option value="Rajshahi">Rajshahi</option>
+                </select>
+            </div>
+
+            <p class="directory-status" id="directory-status" aria-live="polite">
+                Showing 5 sample listings
+            </p>
+
+            <div class="mandir-grid" id="mandir-grid">
+
+                <article class="mandir-card"
+                         data-name="Dhakeshwari Temple"
+                         data-district="Dhaka"
+                         data-location="Dhakeshwari Temple Dhaka">
+
+                    <img
+                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                        alt="Illustrative image for a Dhaka temple listing"
+                        loading="lazy">
+
+                    <div class="mandir-card-content">
+                        <p class="mandir-label">SAMPLE LISTING</p>
+                        <h2>Dhakeshwari Temple</h2>
+                        <p class="mandir-location">📍 Dhaka</p>
+                        <p class="mandir-description">
+                            A directory entry for exploring a well-known
+                            Hindu temple in Dhaka. Confirm listing details
+                            before publishing visitor information.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="mandir-card"
+                         data-name="Faridpur Mandir Listing"
+                         data-district="Faridpur"
+                         data-location="Faridpur">
+
+                    <img
+                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                        alt="Illustrative image for a Faridpur temple listing"
+                        loading="lazy">
+
+                    <div class="mandir-card-content">
+                        <p class="mandir-label">SAMPLE LISTING</p>
+                        <h2>Faridpur Mandir Listing</h2>
+                        <p class="mandir-location">📍 Faridpur</p>
+                        <p class="mandir-description">
+                            Placeholder for a temple in Faridpur.
+                            Add its verified name and address before launch.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="mandir-card"
+                         data-name="Chattogram Mandir Listing"
+                         data-district="Chattogram"
+                         data-location="Chattogram">
+
+                    <img
+                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                        alt="Illustrative image for a Chattogram temple listing"
+                        loading="lazy">
+
+                    <div class="mandir-card-content">
+                        <p class="mandir-label">SAMPLE LISTING</p>
+                        <h2>Chattogram Mandir Listing</h2>
+                        <p class="mandir-location">📍 Chattogram</p>
+                        <p class="mandir-description">
+                            Placeholder for a temple in Chattogram.
+                            Verified community information can be added later.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="mandir-card"
+                         data-name="Khulna Mandir Listing"
+                         data-district="Khulna"
+                         data-location="Khulna">
+
+                    <img
+                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                        alt="Illustrative image for a Khulna temple listing"
+                        loading="lazy">
+
+                    <div class="mandir-card-content">
+                        <p class="mandir-label">SAMPLE LISTING</p>
+                        <h2>Khulna Mandir Listing</h2>
+                        <p class="mandir-location">📍 Khulna</p>
+                        <p class="mandir-description">
+                            Placeholder for a temple in Khulna.
+                            Confirm its name and location before publication.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="mandir-card"
+                         data-name="Rajshahi Mandir Listing"
+                         data-district="Rajshahi"
+                         data-location="Rajshahi">
+
+                    <img
+                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
+                        alt="Illustrative image for a Rajshahi temple listing"
+                        loading="lazy">
+
+                    <div class="mandir-card-content">
+                        <p class="mandir-label">SAMPLE LISTING</p>
+                        <h2>Rajshahi Mandir Listing</h2>
+                        <p class="mandir-location">📍 Rajshahi</p>
+                        <p class="mandir-description">
+                            Placeholder for a temple in Rajshahi.
+                            Verified temple details can be added later.
+                        </p>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="directory-empty" id="directory-empty">
+                <h2>No Mandir Found</h2>
+                <p>Try another name or select a different district.</p>
+            </div>
+
+            <p class="directory-note">
+                Note: This page currently contains sample directory entries,
+                not a verified nationwide temple database. Images are
+                illustrative and may not depict the named temple.
+                Please verify names, addresses and images before publishing.
+            </p>
+
+            <div class="directory-links">
+                <a href="puja-directory.html">Explore Puja Directory →</a>
+                <a href="gallery.html">View Photo Gallery →</a>
+            </div>
+
+        </div>
+    </section>
+
+</main>
+
+<script src="js/script.js"></script>
+
+<script>
+    const searchInput = document.getElementById("mandir-search");
+    const districtFilter = document.getElementById("district-filter");
+    const cards = document.querySelectorAll(".mandir-card");
+    const statusMessage = document.getElementById("directory-status");
+    const emptyMessage = document.getElementById("directory-empty");
+
+    function filterMandirs() {
+        const query = searchInput.value.toLowerCase().trim();
+        const district = districtFilter.value;
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const searchableText = (
+                card.dataset.name + " " +
+                card.dataset.location + " " +
+                card.textContent
+            ).toLowerCase();
+
+            const matchesSearch = !query || searchableText.includes(query);
+            const matchesDistrict =
+                !district || card.dataset.district === district;
+
+            const visible = matchesSearch && matchesDistrict;
+
+            card.hidden = !visible;
+
+            if (visible) {
+                visibleCount++;
+            }
+        });
+
+        statusMessage.textContent =
+            `Showing ${visibleCount} sample listing${visibleCount === 1 ? "" : "s"}`;
+
+        emptyMessage.style.display = visibleCount === 0 ? "block" : "none";
+    }
+
+    searchInput.addEventListener("input", filterMandirs);
+    districtFilter.addEventListener("change", filterMandirs);
+</script>
+
+</body>
+</html>
+```
