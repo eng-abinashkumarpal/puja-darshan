@@ -74,13 +74,22 @@
             <span>Puja Darshan</span>
         </a>
 
-        <nav class="main-nav" aria-label="Main navigation">
-            <a href="index.html" class="active">Home</a>
-            <a href="gallery.html">Photo Gallery</a>
-            <a href="videos.html">Videos</a>
-            <a href="about.html">About</a>
-            <a href="contact.html">Contact</a>
-        </nav>
+
+<button class="menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="main-navigation">
+    <span class="menu-toggle-label">Menu</span>
+    <span aria-hidden="true">☰</span>
+</button>
+
+<nav class="main-nav" id="main-navigation" aria-label="Main navigation">
+    <a href="index.html" class="active" aria-current="page">Home</a>
+    <a href="gallery.html">Photo Gallery</a>
+    <a href="videos.html">Videos</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+</nav>
 
     </div>
 </header>
