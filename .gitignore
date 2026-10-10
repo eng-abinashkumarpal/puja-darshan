@@ -1,1 +1,16 @@
 images/originals/
+
+# Node.js dependencies
+backend/node_modules/
+
+# Environment variables and secrets
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Logs
+backend/*.log
+npm-debug.log*
+
+# Local session and generated files
+backend/.sessions/
