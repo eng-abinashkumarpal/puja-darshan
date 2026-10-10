@@ -4,6 +4,8 @@ const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
+const { RedisStore } = require('connect-redis');
+const { createClient } = require('redis');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -13,6 +15,17 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
+    if (isProduction && !process.env.REDIS_URL) {
+    throw new Error('Missing required configuration: REDIS_URL');
+}
+
+const redisClient = isProduction
+    ? createClient({ url: process.env.REDIS_URL })
+    : null;
+
+if (redisClient) {
+    redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+}
 const requiredEnv = [
     'ADMIN_USERNAME',
     'ADMIN_PASSWORD_HASH',
@@ -55,6 +68,12 @@ app.use('/api', rateLimit({
 }));
 
 app.use(session({
+    store: isProduction
+        ? new RedisStore({
+            client: redisClient,
+            prefix: 'puja-darshan:sess:'
+        })
+        : undefined,
     name: 'pd.sid',
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -378,8 +397,23 @@ app.use((req, res) => {
     });
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(
-        `Puja Darshan API running at http://127.0.0.1:${PORT}`
-    );
-});
+
+async function startServer() {
+    try {
+        if (redisClient) {
+            await redisClient.connect();
+            console.log('Redis connected successfully.');
+        }
+
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(
+                `Puja Darshan API running on port ${PORT}`
+            );
+        });
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
+}
+
+startServer();
