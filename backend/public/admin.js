@@ -12,6 +12,11 @@ const gallery = document.getElementById('media-gallery');
 const galleryStatus = document.getElementById('gallery-status');
 const refreshButton = document.getElementById('refresh-button');
 
+const passwordChangeForm = document.getElementById('password-change-form');
+const passwordChangeButton = document.getElementById('password-change-button');
+const passwordChangeStatus = document.getElementById('password-change-status');
+
+
 function showSignedIn(username) {
   form.hidden = true;
   adminArea.hidden = false;
@@ -371,6 +376,56 @@ mandirForm.addEventListener('submit', async event => {
 cancelMandirEditButton.addEventListener('click', () => {
   resetMandirForm();
   mandirStatus.textContent = 'Edit cancelled.';
+});
+
+
+passwordChangeForm.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const currentPassword = document.getElementById('current-admin-password').value;
+  const newPassword = document.getElementById('new-admin-password').value;
+  const confirmPassword = document.getElementById('confirm-admin-password').value;
+  const passwordBytes = new TextEncoder().encode(newPassword).length;
+
+  if (newPassword !== confirmPassword) {
+    passwordChangeStatus.textContent = 'The new passwords do not match.';
+    return;
+  }
+
+  if (passwordBytes < 12 || passwordBytes > 72) {
+    passwordChangeStatus.textContent =
+      'New password must be 12–72 UTF-8 bytes.';
+    return;
+  }
+
+  if (currentPassword === newPassword) {
+    passwordChangeStatus.textContent =
+      'Choose a new password different from the current one.';
+    return;
+  }
+
+  passwordChangeButton.disabled = true;
+  passwordChangeStatus.textContent = 'Changing password…';
+
+  try {
+    await apiRequest('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+
+    passwordChangeForm.reset();
+    adminArea.hidden = true;
+    form.hidden = false;
+    form.reset();
+    gallery.replaceChildren();
+    message.textContent =
+      'Password changed successfully. Please sign in with your new password.';
+  } catch (error) {
+    passwordChangeStatus.textContent = error.message;
+  } finally {
+    passwordChangeButton.disabled = false;
+  }
 });
 
 checkSession();

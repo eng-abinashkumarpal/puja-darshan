@@ -50,6 +50,44 @@ async function writeMandirs(mandirs) {
 }
 
 
+
+const ADMIN_PASSWORD_REDIS_KEY = 'puja-darshan:admin-password-hash-b64';
+const ADMIN_PASSWORD_FILE = path.join(MANDIR_DATA_DIR, 'admin-password.json');
+
+async function readAdminPasswordHashB64() {
+    if (redisClient) {
+        const saved = await redisClient.get(ADMIN_PASSWORD_REDIS_KEY);
+        return saved || process.env.ADMIN_PASSWORD_HASH_B64 || '';
+    }
+
+    try {
+        const stored = JSON.parse(fs.readFileSync(ADMIN_PASSWORD_FILE, 'utf8'));
+        if (typeof stored.hashB64 === 'string' && stored.hashB64) {
+            return stored.hashB64;
+        }
+    } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+    }
+
+    return process.env.ADMIN_PASSWORD_HASH_B64 || '';
+}
+
+async function writeAdminPasswordHashB64(hashB64) {
+    if (redisClient) {
+        await redisClient.set(ADMIN_PASSWORD_REDIS_KEY, hashB64);
+        return;
+    }
+
+    fs.mkdirSync(MANDIR_DATA_DIR, { recursive: true });
+    const tempFile = ADMIN_PASSWORD_FILE + '.tmp';
+    fs.writeFileSync(
+        tempFile,
+        JSON.stringify({ hashB64, updatedAt: new Date().toISOString() }, null, 2) + '\n',
+        { encoding: 'utf8', mode: 0o600 }
+    );
+    fs.renameSync(tempFile, ADMIN_PASSWORD_FILE);
+}
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -152,14 +190,30 @@ const loginLimiter = rateLimit({
     message: { error: 'Too many login attempts. Try again later.' }
 });
 
-function requireAdmin(req, res, next) {
-    if (req.session && req.session.isAdmin === true) {
-        return next();
-    }
+const passwordChangeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many password-change attempts. Try again later.' }
+});
 
-    return res.status(401).json({
-        error: 'Authentication required.'
-    });
+async function isCurrentAdminSession(req) {
+    if (!req.session || req.session.isAdmin !== true) return false;
+    const currentHashB64 = await readAdminPasswordHashB64();
+    return Boolean(
+        currentHashB64 &&
+        req.session.adminPasswordHashB64 === currentHashB64
+    );
+}
+
+async function requireAdmin(req, res, next) {
+    try {
+        if (await isCurrentAdminSession(req)) return next();
+        return res.status(401).json({ error: 'Authentication required.' });
+    } catch (error) {
+        return next(error);
+    }
 }
 
 const allowedMimes = new Set([
@@ -211,7 +265,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res, next) => {
         const usernameMatches =
             username === process.env.ADMIN_USERNAME;
 
-        const encodedHash = process.env.ADMIN_PASSWORD_HASH_B64 || "";
+        const encodedHash = await readAdminPasswordHashB64();
         const passwordHash = Buffer.from(encodedHash, "base64").toString("utf8");
 
         if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(passwordHash)) {
@@ -234,6 +288,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res, next) => {
 
             req.session.isAdmin = true;
             req.session.adminUsername = process.env.ADMIN_USERNAME;
+            req.session.adminPasswordHashB64 = encodedHash;
 
             req.session.save(err => {
                 if (err) return next(err);
@@ -249,17 +304,81 @@ app.post('/api/auth/login', loginLimiter, async (req, res, next) => {
     }
 });
 
-app.get('/api/auth/me', (req, res) => {
-    if (!req.session || req.session.isAdmin !== true) {
-        return res.status(401).json({
-            authenticated: false
-        });
-    }
+app.post('/api/auth/change-password', passwordChangeLimiter, requireAdmin, async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body || {};
 
-    res.json({
-        authenticated: true,
-        username: req.session.adminUsername
-    });
+        if (
+            typeof currentPassword !== 'string' ||
+            typeof newPassword !== 'string' ||
+            currentPassword.length > 200 ||
+            newPassword.length > 200
+        ) {
+            return res.status(400).json({ error: 'Invalid password input.' });
+        }
+
+        const newPasswordBytes = Buffer.byteLength(newPassword, 'utf8');
+        if (newPasswordBytes < 12 || newPasswordBytes > 72) {
+            return res.status(400).json({
+                error: 'New password must be 12–72 UTF-8 bytes.'
+            });
+        }
+
+        const currentHashB64 = await readAdminPasswordHashB64();
+        const currentHash = Buffer.from(currentHashB64, 'base64').toString('utf8');
+
+        if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(currentHash)) {
+            return next(new Error('Admin password hash configuration is invalid.'));
+        }
+
+        if (!(await bcrypt.compare(currentPassword, currentHash))) {
+            return res.status(400).json({ error: 'Current password is incorrect.' });
+        }
+
+        if (currentPassword === newPassword) {
+            return res.status(400).json({
+                error: 'Choose a new password different from the current one.'
+            });
+        }
+
+        const newHash = await bcrypt.hash(newPassword, 12);
+        const newHashB64 = Buffer.from(newHash, 'utf8').toString('base64');
+        await writeAdminPasswordHashB64(newHashB64);
+
+        // Destroy this session. Other old sessions also fail the password-hash check.
+        req.session.destroy(error => {
+            if (error) return next(error);
+
+            res.clearCookie('pd.sid', {
+                httpOnly: true,
+                secure: isProduction,
+                sameSite: 'strict',
+                path: '/'
+            });
+
+            return res.json({
+                success: true,
+                message: 'Password changed. Please sign in again.'
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+app.get('/api/auth/me', async (req, res, next) => {
+    try {
+        if (!(await isCurrentAdminSession(req))) {
+            return res.status(401).json({ authenticated: false });
+        }
+
+        return res.json({
+            authenticated: true,
+            username: req.session.adminUsername
+        });
+    } catch (error) {
+        return next(error);
+    }
 });
 
 app.post('/api/auth/logout', (req, res, next) => {

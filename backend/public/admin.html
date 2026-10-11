@@ -38,7 +38,31 @@
         </button>
       </div>
 
-      <section class="tool-section">
+            <section class="tool-section">
+        <h3>Change Admin Password</h3>
+        <p class="help">
+          Use your current password and choose a new password of 12–72 UTF-8 bytes.
+          You will need to sign in again after changing it.
+        </p>
+        <form id="password-change-form">
+          <label for="current-admin-password">Current password</label>
+          <input id="current-admin-password" type="password"
+                 autocomplete="current-password" required maxlength="200">
+
+          <label for="new-admin-password">New password</label>
+          <input id="new-admin-password" type="password"
+                 autocomplete="new-password" required minlength="12" maxlength="72">
+
+          <label for="confirm-admin-password">Confirm new password</label>
+          <input id="confirm-admin-password" type="password"
+                 autocomplete="new-password" required minlength="12" maxlength="72">
+
+          <button id="password-change-button" type="submit">Change Password</button>
+        </form>
+        <p id="password-change-status" role="status" aria-live="polite"></p>
+      </section>
+
+<section class="tool-section">
         <h3>Upload Photos & Videos</h3>
         <p class="help">
           JPG, PNG, WebP, MP4, MOV or WebM. Maximum 50 MB per file.
