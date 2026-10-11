@@ -59,6 +59,35 @@
       </section>
 
       <section class="tool-section">
+        <h3>Manage Mandirs</h3>
+        <p class="help">Add a Mandir to the public directory, or edit/delete an existing entry.</p>
+        <form id="mandir-form">
+          <input id="mandir-id" type="hidden">
+          <label for="mandir-name">Mandir name</label>
+          <input id="mandir-name" maxlength="150" required>
+
+          <label for="mandir-district">District</label>
+          <input id="mandir-district" maxlength="100" required>
+
+          <label for="mandir-address">Address (optional)</label>
+          <input id="mandir-address" maxlength="250">
+
+          <label for="mandir-image-url">Image URL (HTTPS, optional)</label>
+          <input id="mandir-image-url" type="url" maxlength="2000" placeholder="https://…">
+
+          <label for="mandir-description">Description (optional)</label>
+          <textarea id="mandir-description" rows="4" maxlength="2000"></textarea>
+
+          <div class="mandir-form-actions">
+            <button id="save-mandir-button" type="submit">Add Mandir</button>
+            <button id="cancel-mandir-edit" class="secondary" type="button" hidden>Cancel edit</button>
+          </div>
+        </form>
+        <p id="mandir-status" role="status" aria-live="polite"></p>
+        <div id="mandir-list" class="mandir-list"></div>
+      </section>
+
+      <section class="tool-section">
         <div class="gallery-heading">
           <h3>Media Gallery</h3>
           <button id="refresh-button" class="secondary" type="button">

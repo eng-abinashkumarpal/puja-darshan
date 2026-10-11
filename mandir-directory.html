@@ -264,129 +264,17 @@
             </div>
 
             <p class="directory-status" id="directory-status" aria-live="polite">
-                Showing 5 sample listings
+                Loading mandir listings…
             </p>
 
-            <div class="mandir-grid" id="mandir-grid">
-
-                <article class="mandir-card"
-                         data-name="Dhakeshwari Temple"
-                         data-district="Dhaka"
-                         data-location="Dhakeshwari Temple Dhaka">
-
-                    <img
-                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
-                        alt="Illustrative image for a Dhaka temple listing"
-                        loading="lazy">
-
-                    <div class="mandir-card-content">
-                        <p class="mandir-label">SAMPLE LISTING</p>
-                        <h2>Dhakeshwari Temple</h2>
-                        <p class="mandir-location">📍 Dhaka</p>
-                        <p class="mandir-description">
-                            A directory entry for exploring a well-known
-                            Hindu temple in Dhaka. Confirm listing details
-                            before publishing visitor information.
-                        </p>
-                    </div>
-                </article>
-
-                <article class="mandir-card"
-                         data-name="Faridpur Mandir Listing"
-                         data-district="Faridpur"
-                         data-location="Faridpur">
-
-                    <img
-                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
-                        alt="Illustrative image for a Faridpur temple listing"
-                        loading="lazy">
-
-                    <div class="mandir-card-content">
-                        <p class="mandir-label">SAMPLE LISTING</p>
-                        <h2>Faridpur Mandir Listing</h2>
-                        <p class="mandir-location">📍 Faridpur</p>
-                        <p class="mandir-description">
-                            Placeholder for a temple in Faridpur.
-                            Add its verified name and address before launch.
-                        </p>
-                    </div>
-                </article>
-
-                <article class="mandir-card"
-                         data-name="Chattogram Mandir Listing"
-                         data-district="Chattogram"
-                         data-location="Chattogram">
-
-                    <img
-                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
-                        alt="Illustrative image for a Chattogram temple listing"
-                        loading="lazy">
-
-                    <div class="mandir-card-content">
-                        <p class="mandir-label">SAMPLE LISTING</p>
-                        <h2>Chattogram Mandir Listing</h2>
-                        <p class="mandir-location">📍 Chattogram</p>
-                        <p class="mandir-description">
-                            Placeholder for a temple in Chattogram.
-                            Verified community information can be added later.
-                        </p>
-                    </div>
-                </article>
-
-                <article class="mandir-card"
-                         data-name="Khulna Mandir Listing"
-                         data-district="Khulna"
-                         data-location="Khulna">
-
-                    <img
-                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
-                        alt="Illustrative image for a Khulna temple listing"
-                        loading="lazy">
-
-                    <div class="mandir-card-content">
-                        <p class="mandir-label">SAMPLE LISTING</p>
-                        <h2>Khulna Mandir Listing</h2>
-                        <p class="mandir-location">📍 Khulna</p>
-                        <p class="mandir-description">
-                            Placeholder for a temple in Khulna.
-                            Confirm its name and location before publication.
-                        </p>
-                    </div>
-                </article>
-
-                <article class="mandir-card"
-                         data-name="Rajshahi Mandir Listing"
-                         data-district="Rajshahi"
-                         data-location="Rajshahi">
-
-                    <img
-                        src="images/durga-puja/durga-puja-decoration-pandal-01.jpg"
-                        alt="Illustrative image for a Rajshahi temple listing"
-                        loading="lazy">
-
-                    <div class="mandir-card-content">
-                        <p class="mandir-label">SAMPLE LISTING</p>
-                        <h2>Rajshahi Mandir Listing</h2>
-                        <p class="mandir-location">📍 Rajshahi</p>
-                        <p class="mandir-description">
-                            Placeholder for a temple in Rajshahi.
-                            Verified temple details can be added later.
-                        </p>
-                    </div>
-                </article>
-
-            </div>
-
+            <div class="mandir-grid" id="mandir-grid"></div>
             <div class="directory-empty" id="directory-empty">
                 <h2>No Mandir Found</h2>
                 <p>Try another name or select a different district.</p>
             </div>
 
             <p class="directory-note">
-                Note: This page currently contains sample directory entries,
-                not a verified nationwide temple database. Images are
-                illustrative and may not depict the named temple.
-                Please verify names, addresses and images before publishing.
+                Note: Mandir listings are managed through the Puja Darshan admin panel. Please verify addresses and images before relying on them for visitor information.
             </p>
 
             <div class="directory-links">
@@ -402,45 +290,166 @@
 <script src="js/script.js"></script>
 
 <script>
-    const searchInput = document.getElementById("mandir-search");
-    const districtFilter = document.getElementById("district-filter");
-    const cards = document.querySelectorAll(".mandir-card");
-    const statusMessage = document.getElementById("directory-status");
-    const emptyMessage = document.getElementById("directory-empty");
+(function () {
+    const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ? 'http://localhost:3000/api/mandirs'
+        : 'https://puja-darshan-api.onrender.com/api/mandirs';
+
+    const searchInput = document.getElementById('mandir-search');
+    const districtFilter = document.getElementById('district-filter');
+    const grid = document.getElementById('mandir-grid');
+    const statusMessage = document.getElementById('directory-status');
+    const emptyMessage = document.getElementById('directory-empty');
+    const emptyHeading = emptyMessage.querySelector('h2');
+    const emptyDescription = emptyMessage.querySelector('p');
+
+    let allMandirs = [];
+
+    function text(value) {
+        return typeof value === 'string' ? value.trim() : '';
+    }
+
+    function createCard(mandir) {
+        const name = text(mandir.name);
+        const district = text(mandir.district);
+        const address = text(mandir.address);
+        const description = text(mandir.description);
+        const imageUrl = text(mandir.imageUrl);
+
+        const card = document.createElement('article');
+        card.className = 'mandir-card';
+        card.dataset.name = name;
+        card.dataset.district = district;
+        card.dataset.location = [district, address].filter(Boolean).join(' ');
+
+        if (/^https:\/\//i.test(imageUrl)) {
+            const image = document.createElement('img');
+            image.src = imageUrl;
+            image.alt = name ? name + ' image' : 'Mandir image';
+            image.loading = 'lazy';
+            image.referrerPolicy = 'no-referrer';
+            card.appendChild(image);
+        }
+
+        const content = document.createElement('div');
+        content.className = 'mandir-card-content';
+
+        const label = document.createElement('p');
+        label.className = 'mandir-label';
+        label.textContent = 'MANDIR LISTING';
+
+        const heading = document.createElement('h2');
+        heading.textContent = name || 'Unnamed Mandir';
+
+        const location = document.createElement('p');
+        location.className = 'mandir-location';
+        location.textContent = '📍 ' + [district, address].filter(Boolean).join(', ');
+
+        content.append(label, heading, location);
+
+        if (description) {
+            const details = document.createElement('p');
+            details.className = 'mandir-description';
+            details.textContent = description;
+            content.appendChild(details);
+        }
+
+        card.appendChild(content);
+        return card;
+    }
+
+    function updateDistricts() {
+        const selected = districtFilter.value;
+        const districts = [...new Set(
+            allMandirs.map(item => text(item.district)).filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b));
+
+        districtFilter.replaceChildren(new Option('All Districts', ''));
+
+        districts.forEach(district => {
+            districtFilter.add(new Option(district, district));
+        });
+
+        if (districts.includes(selected)) {
+            districtFilter.value = selected;
+        }
+    }
 
     function filterMandirs() {
         const query = searchInput.value.toLowerCase().trim();
         const district = districtFilter.value;
-        let visibleCount = 0;
+        let visible = 0;
 
-        cards.forEach(card => {
-            const searchableText = (
-                card.dataset.name + " " +
-                card.dataset.location + " " +
+        grid.querySelectorAll('.mandir-card').forEach(card => {
+            const searchable = (
+                card.dataset.name + ' ' +
+                card.dataset.location + ' ' +
                 card.textContent
             ).toLowerCase();
 
-            const matchesSearch = !query || searchableText.includes(query);
-            const matchesDistrict =
-                !district || card.dataset.district === district;
+            const matches = (!query || searchable.includes(query)) &&
+                (!district || card.dataset.district === district);
 
-            const visible = matchesSearch && matchesDistrict;
-
-            card.hidden = !visible;
-
-            if (visible) {
-                visibleCount++;
-            }
+            card.hidden = !matches;
+            if (matches) visible++;
         });
 
-        statusMessage.textContent =
-            `Showing ${visibleCount} sample listing${visibleCount === 1 ? "" : "s"}`;
-
-        emptyMessage.style.display = visibleCount === 0 ? "block" : "none";
+        if (allMandirs.length === 0) {
+            statusMessage.textContent = 'No mandirs have been added yet.';
+            emptyHeading.textContent = 'No Mandirs Added Yet';
+            emptyDescription.textContent =
+                'New mandir listings will appear here once added by the admin.';
+            emptyMessage.style.display = 'block';
+        } else if (visible === 0) {
+            statusMessage.textContent = 'No matching mandirs found.';
+            emptyHeading.textContent = 'No Mandir Found';
+            emptyDescription.textContent =
+                'Try another name or select a different district.';
+            emptyMessage.style.display = 'block';
+        } else {
+            statusMessage.textContent =
+                'Showing ' + visible + ' of ' + allMandirs.length +
+                ' mandir listing' + (allMandirs.length === 1 ? '' : 's');
+            emptyMessage.style.display = 'none';
+        }
     }
 
-    searchInput.addEventListener("input", filterMandirs);
-    districtFilter.addEventListener("change", filterMandirs);
+    async function loadMandirs() {
+        statusMessage.textContent = 'Loading mandir listings…';
+        emptyMessage.style.display = 'none';
+
+        try {
+            const response = await fetch(API_URL, { cache: 'no-store' });
+
+            if (!response.ok) {
+                throw new Error('API returned HTTP ' + response.status);
+            }
+
+            const data = await response.json();
+
+            if (!data || !Array.isArray(data.mandirs)) {
+                throw new Error('Invalid Mandir API response.');
+            }
+
+            allMandirs = data.mandirs;
+            grid.replaceChildren(...allMandirs.map(createCard));
+            updateDistricts();
+            filterMandirs();
+        } catch (error) {
+            console.error('Unable to load Mandir Directory:', error);
+            grid.replaceChildren();
+            statusMessage.textContent = 'Unable to load mandir listings.';
+            emptyHeading.textContent = 'Directory Temporarily Unavailable';
+            emptyDescription.textContent =
+                'Please refresh the page and try again.';
+            emptyMessage.style.display = 'block';
+        }
+    }
+
+    searchInput.addEventListener('input', filterMandirs);
+    districtFilter.addEventListener('change', filterMandirs);
+    loadMandirs();
+})();
 </script>
 
 </body>

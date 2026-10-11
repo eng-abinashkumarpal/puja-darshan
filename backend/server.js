@@ -11,6 +11,45 @@ const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 
+const fs = require('fs');
+
+// Mandir data storage
+const MANDIR_REDIS_KEY = 'puja-darshan:mandirs';
+const MANDIR_DATA_DIR = path.join(__dirname, 'data');
+const MANDIR_DATA_FILE = path.join(MANDIR_DATA_DIR, 'mandirs.json');
+
+async function readMandirs() {
+    if (redisClient) {
+        const saved = await redisClient.get(MANDIR_REDIS_KEY);
+        if (!saved) return [];
+        const data = JSON.parse(saved);
+        return Array.isArray(data) ? data : [];
+    }
+
+    try {
+        const data = JSON.parse(
+            fs.readFileSync(MANDIR_DATA_FILE, 'utf8')
+        );
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    }
+}
+
+async function writeMandirs(mandirs) {
+    const saved = JSON.stringify(mandirs, null, 2);
+
+    if (redisClient) {
+        await redisClient.set(MANDIR_REDIS_KEY, saved);
+        return;
+    }
+
+    fs.mkdirSync(MANDIR_DATA_DIR, { recursive: true });
+    fs.writeFileSync(MANDIR_DATA_FILE, saved, 'utf8');
+}
+
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -53,6 +92,25 @@ cloudinary.config({
 
 app.disable('x-powered-by');
 app.use(helmet());
+
+// Allow the public GitHub Pages frontend to read the public Mandir API.
+const allowedOrigins = new Set([
+    'https://eng-abinashkumarpal.github.io',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500'
+]);
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.has(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+});
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -377,6 +435,112 @@ app.delete('/api/admin/media', requireAdmin, async (req, res, next) => {
             });
         }
 
+        next(error);
+    }
+});
+
+// Mandir directory API.
+function validateMandirInput(body, existing = {}) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return { error: 'Invalid Mandir data.' };
+    }
+
+    const limits = {
+        name: 150,
+        district: 100,
+        address: 250,
+        description: 2000,
+        imageUrl: 2000
+    };
+    const value = {};
+
+    for (const [field, maxLength] of Object.entries(limits)) {
+        const raw = body[field] === undefined ? (existing[field] || '') : body[field];
+        if (typeof raw !== 'string' || raw.length > maxLength) {
+            return { error: 'Invalid ' + field + '.' };
+        }
+        value[field] = raw.trim();
+    }
+
+    if (!value.name) return { error: 'Mandir name is required.' };
+    if (!value.district) return { error: 'District is required.' };
+
+    if (value.imageUrl) {
+        try {
+            const parsed = new URL(value.imageUrl);
+            if (parsed.protocol !== 'https:') {
+                return { error: 'Image URL must use HTTPS.' };
+            }
+        } catch {
+            return { error: 'Enter a valid HTTPS image URL.' };
+        }
+    }
+
+    return { value };
+}
+
+app.get('/api/mandirs', async (req, res, next) => {
+    try {
+        res.set('Cache-Control', 'no-store');
+        const mandirs = await readMandirs();
+        res.json({ success: true, mandirs });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/admin/mandirs', requireAdmin, async (req, res, next) => {
+    try {
+        const checked = validateMandirInput(req.body || {});
+        if (checked.error) return res.status(400).json({ error: checked.error });
+
+        const mandirs = await readMandirs();
+        const now = new Date().toISOString();
+        const mandir = {
+            id: require('crypto').randomUUID(),
+            ...checked.value,
+            createdAt: now,
+            updatedAt: now
+        };
+        mandirs.push(mandir);
+        await writeMandirs(mandirs);
+        res.status(201).json({ success: true, mandir });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.put('/api/admin/mandirs/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const mandirs = await readMandirs();
+        const index = mandirs.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Mandir not found.' });
+
+        const checked = validateMandirInput(req.body || {}, mandirs[index]);
+        if (checked.error) return res.status(400).json({ error: checked.error });
+
+        mandirs[index] = {
+            ...mandirs[index],
+            ...checked.value,
+            updatedAt: new Date().toISOString()
+        };
+        await writeMandirs(mandirs);
+        res.json({ success: true, mandir: mandirs[index] });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete('/api/admin/mandirs/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const mandirs = await readMandirs();
+        const index = mandirs.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Mandir not found.' });
+
+        mandirs.splice(index, 1);
+        await writeMandirs(mandirs);
+        res.json({ success: true, message: 'Mandir deleted successfully.' });
+    } catch (error) {
         next(error);
     }
 });

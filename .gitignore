@@ -14,3 +14,6 @@ npm-debug.log*
 
 # Local session and generated files
 backend/.sessions/
+
+backend/data/
+backend/.backups/

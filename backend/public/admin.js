@@ -19,6 +19,7 @@ function showSignedIn(username) {
     `Signed in as ${username}.`;
   message.textContent = '';
   loadGallery();
+  loadMandirs();
 }
 
 async function apiRequest(url, options = {}) {
@@ -29,7 +30,7 @@ async function apiRequest(url, options = {}) {
 
   const data = await response.json().catch(() => ({}));
 
-  if (response.status === 401) {
+  if (response.status === 401 && url !== '/api/auth/login') {
     adminArea.hidden = true;
     form.hidden = false;
     message.textContent = 'Your session expired. Please sign in again.';
@@ -233,5 +234,143 @@ async function loadGallery() {
 }
 
 refreshButton.addEventListener('click', loadGallery);
+
+
+
+// Mandir management UI.
+const mandirForm = document.getElementById('mandir-form');
+const mandirList = document.getElementById('mandir-list');
+const mandirStatus = document.getElementById('mandir-status');
+const saveMandirButton = document.getElementById('save-mandir-button');
+const cancelMandirEditButton = document.getElementById('cancel-mandir-edit');
+
+function resetMandirForm() {
+  mandirForm.reset();
+  document.getElementById('mandir-id').value = '';
+  saveMandirButton.textContent = 'Add Mandir';
+  cancelMandirEditButton.hidden = true;
+}
+
+function createMandirAdminCard(item) {
+  const card = document.createElement('article');
+  card.className = 'mandir-admin-card';
+
+  const title = document.createElement('h4');
+  title.textContent = item.name;
+  const district = document.createElement('p');
+  district.textContent = 'District: ' + item.district;
+  card.append(title, district);
+
+  if (item.address) {
+    const address = document.createElement('p');
+    address.textContent = 'Address: ' + item.address;
+    card.appendChild(address);
+  }
+  if (item.description) {
+    const description = document.createElement('p');
+    description.textContent = item.description;
+    card.appendChild(description);
+  }
+  if (item.imageUrl) {
+    const image = document.createElement('img');
+    image.src = item.imageUrl;
+    image.alt = item.name;
+    image.loading = 'lazy';
+    image.className = 'mandir-admin-image';
+    image.addEventListener('error', () => { image.hidden = true; });
+    card.appendChild(image);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'mandir-card-actions';
+  const editButton = document.createElement('button');
+  editButton.type = 'button';
+  editButton.className = 'secondary';
+  editButton.textContent = 'Edit';
+  editButton.addEventListener('click', () => {
+    document.getElementById('mandir-id').value = item.id;
+    document.getElementById('mandir-name').value = item.name || '';
+    document.getElementById('mandir-district').value = item.district || '';
+    document.getElementById('mandir-address').value = item.address || '';
+    document.getElementById('mandir-image-url').value = item.imageUrl || '';
+    document.getElementById('mandir-description').value = item.description || '';
+    saveMandirButton.textContent = 'Save changes';
+    cancelMandirEditButton.hidden = false;
+    mandirStatus.textContent = 'Editing: ' + item.name;
+    mandirForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'danger';
+  deleteButton.textContent = 'Delete';
+  deleteButton.addEventListener('click', async () => {
+    if (!window.confirm('Delete "' + item.name + '" from the Mandir directory?')) return;
+    deleteButton.disabled = true;
+    mandirStatus.textContent = 'Deleting Mandir…';
+    try {
+      await apiRequest('/api/admin/mandirs/' + encodeURIComponent(item.id), { method: 'DELETE' });
+      mandirStatus.textContent = 'Mandir deleted successfully.';
+      if (document.getElementById('mandir-id').value === item.id) resetMandirForm();
+      await loadMandirs();
+    } catch (error) {
+      mandirStatus.textContent = error.message;
+      deleteButton.disabled = false;
+    }
+  });
+  actions.append(editButton, deleteButton);
+  card.appendChild(actions);
+  return card;
+}
+
+async function loadMandirs() {
+  mandirList.replaceChildren();
+  mandirStatus.textContent = 'Loading Mandirs…';
+  try {
+    const data = await apiRequest('/api/mandirs');
+    const mandirs = Array.isArray(data.mandirs) ? data.mandirs : [];
+    if (mandirs.length === 0) {
+      mandirStatus.textContent = 'No Mandirs added yet.';
+      return;
+    }
+    for (const item of mandirs) mandirList.appendChild(createMandirAdminCard(item));
+    mandirStatus.textContent = 'Showing ' + mandirs.length + ' Mandir(s).';
+  } catch (error) {
+    mandirStatus.textContent = error.message;
+  }
+}
+
+mandirForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const id = document.getElementById('mandir-id').value;
+  const payload = {
+    name: document.getElementById('mandir-name').value,
+    district: document.getElementById('mandir-district').value,
+    address: document.getElementById('mandir-address').value,
+    imageUrl: document.getElementById('mandir-image-url').value,
+    description: document.getElementById('mandir-description').value
+  };
+  saveMandirButton.disabled = true;
+  mandirStatus.textContent = id ? 'Saving Mandir changes…' : 'Adding Mandir…';
+  try {
+    await apiRequest(id ? '/api/admin/mandirs/' + encodeURIComponent(id) : '/api/admin/mandirs', {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    mandirStatus.textContent = id ? 'Mandir updated successfully.' : 'Mandir added successfully.';
+    resetMandirForm();
+    await loadMandirs();
+  } catch (error) {
+    mandirStatus.textContent = error.message;
+  } finally {
+    saveMandirButton.disabled = false;
+  }
+});
+
+cancelMandirEditButton.addEventListener('click', () => {
+  resetMandirForm();
+  mandirStatus.textContent = 'Edit cancelled.';
+});
 
 checkSession();
