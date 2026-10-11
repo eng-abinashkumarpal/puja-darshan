@@ -28,7 +28,7 @@ if (redisClient) {
 }
 const requiredEnv = [
     'ADMIN_USERNAME',
-    'ADMIN_PASSWORD_HASH',
+    'ADMIN_PASSWORD_HASH_B64',
     'SESSION_SECRET',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
@@ -153,9 +153,16 @@ app.post('/api/auth/login', loginLimiter, async (req, res, next) => {
         const usernameMatches =
             username === process.env.ADMIN_USERNAME;
 
+        const encodedHash = process.env.ADMIN_PASSWORD_HASH_B64 || "";
+        const passwordHash = Buffer.from(encodedHash, "base64").toString("utf8");
+
+        if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(passwordHash)) {
+            return next(new Error("Admin password hash configuration is invalid."));
+        }
+
         const passwordMatches = await bcrypt.compare(
             password,
-            process.env.ADMIN_PASSWORD_HASH
+            passwordHash
         );
 
         if (!usernameMatches || !passwordMatches) {
