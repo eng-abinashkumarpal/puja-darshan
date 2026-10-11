@@ -117,7 +117,7 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 50 * 1024 * 1024,
-        files: 1
+        files: 20
     },
     fileFilter: (req, file, cb) => {
         if (!allowedMimes.has(file.mimetype)) {
@@ -234,44 +234,53 @@ app.get('/api/admin/test', requireAdmin, (req, res) => {
 });
 
 // Upload one image or video to Cloudinary.
+
+ // Upload multiple images or videos to Cloudinary.
 app.post(
     '/api/admin/media',
     requireAdmin,
-    upload.single('file'),
+    upload.array('files', 10),
     async (req, res, next) => {
         try {
-            if (!req.file) {
+            if (!req.files || req.files.length === 0) {
                 return res.status(400).json({
-                    error: 'Please select an image or video.'
+                    error: 'Please select at least one image or video.'
                 });
             }
 
-            const result = await new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream(
-                    {
-                        folder: 'puja-darshan',
-                        tags: ['puja-darshan-gallery'],
-                        resource_type: 'auto'
-                    },
-                    (error, uploaded) => {
-                        if (error) return reject(error);
-                        resolve(uploaded);
-                    }
-                );
+            const media = await Promise.all(
+                req.files.map(async (file) => {
+                    const result = await new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream(
+                            {
+                                folder: 'puja-darshan',
+                                tags: ['puja-darshan-gallery'],
+                                resource_type: 'auto'
+                            },
+                            (error, uploaded) => {
+                                if (error) return reject(error);
+                                resolve(uploaded);
+                            }
+                        );
 
-                stream.end(req.file.buffer);
-            });
+                        stream.end(file.buffer);
+                    });
+
+                    return {
+                        public_id: result.public_id,
+                        secure_url: result.secure_url,
+                        resource_type: result.resource_type,
+                        format: result.format,
+                        original_filename: file.originalname,
+                        created_at: result.created_at
+                    };
+                })
+            );
 
             res.status(201).json({
                 success: true,
-                media: {
-                    public_id: result.public_id,
-                    secure_url: result.secure_url,
-                    resource_type: result.resource_type,
-                    format: result.format,
-                    original_filename: req.file.originalname,
-                    created_at: result.created_at
-                }
+                count: media.length,
+                media
             });
         } catch (error) {
             next(error);

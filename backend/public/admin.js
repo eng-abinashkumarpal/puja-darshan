@@ -96,38 +96,52 @@ logoutButton.addEventListener('click', async () => {
   }
 });
 
+
 uploadForm.addEventListener('submit', async event => {
   event.preventDefault();
 
-  const file = mediaFile.files[0];
+  const files = Array.from(mediaFile.files);
 
-  if (!file) {
-    uploadStatus.textContent = 'Please select a file first.';
+  if (files.length === 0) {
+    uploadStatus.textContent = 'Please select at least one file.';
     return;
   }
 
-  if (file.size > 50 * 1024 * 1024) {
-    uploadStatus.textContent = 'File size must not exceed 50 MB.';
+  if (files.length > 10) {
+    uploadStatus.textContent = 'You can upload up to 10 files at once.';
+    return;
+  }
+
+  const oversizedFile = files.find(file => file.size > 50 * 1024 * 1024);
+
+  if (oversizedFile) {
+    uploadStatus.textContent =
+      `${oversizedFile.name} exceeds the 50 MB limit.`;
     return;
   }
 
   uploadButton.disabled = true;
-  uploadStatus.textContent = 'Uploading… Please wait.';
+  uploadStatus.textContent = `Uploading ${files.length} file(s)… Please wait.`;
 
   const body = new FormData();
-  body.append('file', file);
+
+  for (const file of files) {
+    body.append('files', file);
+  }
 
   try {
-    await apiRequest('/api/admin/media', {
+    const data = await apiRequest('/api/admin/media', {
       method: 'POST',
       body
     });
 
-    uploadStatus.textContent = 'Upload successful!';
+    uploadStatus.textContent =
+      `Upload successful! ${data.count} file(s) uploaded.`;
+
     uploadForm.reset();
     await loadGallery();
   } catch (error) {
-    uploadStatus.textContent = error.message;
+    uploadStatus.textContent = `Upload failed: ${error.message}`;
   } finally {
     uploadButton.disabled = false;
   }

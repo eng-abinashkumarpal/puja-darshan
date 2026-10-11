@@ -47,12 +47,12 @@
         <form id="upload-form">
           <label for="media-file">Choose a photo or video</label>
           <input
-            id="media-file"
-            name="file"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
-            required
-          >
+  type="file"
+  id="media-file"
+  accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+  multiple
+  required
+>
           <button id="upload-button" type="submit">Upload Media</button>
         </form>
         <p id="upload-status" role="status" aria-live="polite"></p>
