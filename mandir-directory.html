@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +12,9 @@
     <meta name="theme-color" content="#0b0b0b">
 
     <link rel="canonical" href="https://eng-abinashkumarpal.github.io/puja-darshan/mandir-directory.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 
     <style>
@@ -170,7 +173,183 @@
             }
         }
 
+        @me
+        /* Improved readable typography */
+        body {
+            font-family: "Inter", "Hind Siliguri",
+                "Noto Sans Bengali", Arial, sans-serif;
+        }
+
+        .page-hero h1 {
+            overflow-wrap: anywhere;
+            line-height: 1.15;
+        }
+
+        .directory-intro h2 {
+            color: #241714;
+            font-family: "Inter", "Hind Siliguri",
+                "Noto Sans Bengali", Arial, sans-serif;
+            font-size: clamp(1.7rem, 4vw, 2.4rem);
+            line-height: 1.3;
+        }
+
+        .directory-intro p {
+            font-size: clamp(1rem, 2.5vw, 1.1rem);
+        }
+
+        /* Consistent responsive Mandir cards */
+        .mandir-grid {
+            align-items: stretch;
+            gap: 22px;
+        }
+
+        .mandir-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-width: 0;
+            color: #fffaf5;
+        }
+
+        .mandir-card-media {
+            width: 100%;
+            height: 220px;
+            flex: 0 0 220px;
+            overflow: hidden;
+            background: #211513;
+        }
+
+        .mandir-card-media > img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            background: #211513;
+        }
+
+        .mandir-card-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            text-align: center;
+            color: #f4c76a;
+            background: linear-gradient(135deg, #322019, #130c0a);
+            font-size: .95rem;
+            font-weight: 600;
+        }
+
+        .mandir-placeholder-symbol {
+            font-size: 2.8rem;
+            line-height: 1.2;
+        }
+
+        .mandir-card-content {
+            flex: 1;
+            min-width: 0;
+            padding: clamp(16px, 2.4vw, 22px);
+        }
+
+        .mandir-label {
+            font-family: "Inter", "Hind Siliguri", Arial, sans-serif;
+            font-size: .75rem;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .mandir-card h2 {
+            color: #fffaf5;
+            font-family: "Inter", "Hind Siliguri",
+                "Noto Sans Bengali", Arial, sans-serif;
+            font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+            font-weight: 600;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+            margin: 0 0 12px;
+        }
+
+        .mandir-location {
+            color: #e5d8ce;
+            font-size: .95rem;
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
+
+        .mandir-description {
+            color: #e0d5ce;
+            font-size: .96rem;
+            line-height: 1.8;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .directory-status {
+            font-size: .95rem;
+            line-height: 1.6;
+        }
+
+        .directory-filters input,
+        .directory-filters select {
+            min-width: 0;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 850px) {
+            .mandir-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+            }
+        }
+
         @media (max-width: 520px) {
+            .page-hero h1 {
+                font-size: clamp(2rem, 8vw, 2.8rem);
+                line-height: 1.2;
+            }
+
+            .page-hero {
+                padding: 48px 0;
+            }
+
+            .directory-section {
+                padding: 38px 0;
+            }
+
+            .mandir-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 18px;
+            }
+
+            .mandir-card-media {
+                height: 210px;
+                flex-basis: 210px;
+            }
+
+            .mandir-card-content {
+                padding: 18px;
+            }
+
+            .mandir-card h2 {
+                font-size: 1.2rem;
+            }
+
+            .directory-links {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .directory-links a {
+                text-align: center;
+            }
+        }
+
+    dia (max-width: 520px) {
             .directory-section {
                 padding: 50px 0;
             }
@@ -183,7 +362,74 @@
                 height: 220px;
             }
         }
-    </style>
+
+        /* Final responsive image override */
+        .mandir-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .mandir-card {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .mandir-card-media {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            flex: 0 0 auto;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .mandir-card-media > img {
+            position: absolute;
+            inset: 0;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            margin: 0;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        .mandir-card-media > .mandir-card-placeholder {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .mandir-card-content {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 520px) {
+            .mandir-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 16px;
+            }
+
+            .mandir-card-media {
+                aspect-ratio: 16 / 9;
+            }
+        }
+
+</style>
 </head>
 
 <body>
@@ -322,14 +568,42 @@
         card.dataset.district = district;
         card.dataset.location = [district, address].filter(Boolean).join(' ');
 
-        if (/^https:\/\//i.test(imageUrl)) {
+
+        const media = document.createElement('div');
+        media.className = 'mandir-card-media';
+
+        function showPlaceholder(message) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'mandir-card-placeholder';
+
+            const symbol = document.createElement('span');
+            symbol.className = 'mandir-placeholder-symbol';
+            symbol.setAttribute('aria-hidden', 'true');
+            symbol.textContent = '🛕';
+
+            const label = document.createElement('span');
+            label.textContent = message;
+
+            placeholder.append(symbol, label);
+            media.replaceChildren(placeholder);
+        }
+
+        if (imageUrl.toLowerCase().startsWith('https://')) {
             const image = document.createElement('img');
             image.src = imageUrl;
             image.alt = name ? name + ' image' : 'Mandir image';
             image.loading = 'lazy';
+            image.decoding = 'async';
             image.referrerPolicy = 'no-referrer';
-            card.appendChild(image);
+            image.addEventListener('error', () => {
+                showPlaceholder('Image unavailable');
+            });
+            media.appendChild(image);
+        } else {
+            showPlaceholder('Photo not added');
         }
+
+        card.appendChild(media);
 
         const content = document.createElement('div');
         content.className = 'mandir-card-content';
@@ -454,4 +728,4 @@
 
 </body>
 </html>
-```
+
