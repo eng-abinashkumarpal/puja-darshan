@@ -67,3 +67,62 @@ button:focus-visible, input:focus-visible {
 .mandir-admin-card p { white-space: pre-wrap; }
 .mandir-admin-image { display: block; width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; margin: 0.75rem 0; }
 .mandir-card-actions, .mandir-form-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* Puja Darshan responsive media gallery */
+#media-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+    gap: 16px;
+    align-items: start;
+    width: 100%;
+}
+
+#media-gallery .media-card {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 12px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #dce3eb;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+#media-gallery .media-card > img,
+#media-gallery .media-card > video {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: 190px;
+    object-fit: contain;
+    background: #f3f5f7;
+    border-radius: 8px;
+}
+
+#media-gallery .media-card .media-name {
+    margin: 10px 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+#media-gallery .media-card button {
+    max-width: 100%;
+}
+
+@media (max-width: 480px) {
+    #media-gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #media-gallery .media-card {
+        padding: 8px;
+    }
+
+    #media-gallery .media-card > img,
+    #media-gallery .media-card > video {
+        height: 140px;
+    }
+}

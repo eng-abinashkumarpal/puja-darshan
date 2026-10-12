@@ -164,7 +164,14 @@ cloudinary.config({
 });
 
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "img-src": ["'self'", "data:", "blob:", "https://res.cloudinary.com"]
+        }
+    }
+}));
 
 // Allow the public GitHub Pages frontend to read the public Mandir API.
 const allowedOrigins = new Set([
