@@ -716,8 +716,10 @@
             );
 
 
-        const listUrl =
-            `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+        const apiBase = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://localhost:3000"
+    : "https://puja-darshan-api.onrender.com";
+const listUrl = apiBase + "/api/public/media?type=image";
 
 
         /* =========================================
@@ -748,8 +750,8 @@
 
 
                 if (
-                    !data.resources ||
-                    data.resources.length === 0
+                    !data.media ||
+                    data.media.length === 0
                 ) {
 
                     gallery.innerHTML = `
@@ -769,7 +771,7 @@
 
                 /* Newest photos first */
 
-                data.resources.sort(
+                data.media.sort(
                     (a, b) => {
 
                         return new Date(b.created_at) -
@@ -781,7 +783,7 @@
 
                 /* Create gallery cards */
 
-                data.resources.forEach(
+                data.media.forEach(
                     (asset, index) => {
 
 
@@ -802,7 +804,7 @@
 
 
                         image.src =
-                            `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_900/${asset.public_id}`;
+                            asset.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_900/');
 
 
                         image.alt =
@@ -860,7 +862,7 @@
 
                                 openLightbox(
 
-                                    `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${asset.public_id}`
+                                    asset.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto/')
 
                                 );
 

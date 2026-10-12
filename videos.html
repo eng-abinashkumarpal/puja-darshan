@@ -58,6 +58,45 @@
 
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
+
+<style id="puja-darshan-video-gallery-styles">
+#public-video-gallery .public-video-card {
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 16px;
+}
+#public-video-gallery .gallery-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #050505;
+}
+#public-video-gallery .gallery-image video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #050505;
+}
+#public-video-gallery .gallery-info {
+    min-width: 0;
+    padding: 1rem;
+}
+#public-video-gallery .gallery-info h3,
+#public-video-gallery .gallery-info p {
+    overflow-wrap: anywhere;
+}
+#public-video-gallery #videos-status {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+}
+#public-video-gallery .video-load-error {
+    padding: 0.75rem;
+    color: #b91c1c;
+    background: #fff;
+}
+</style>
 </head>
 
 <body>
@@ -137,103 +176,11 @@
             </div>
 
 
-            <div class="gallery-grid">
-
-
-                <!-- Video 1 -->
-                <article class="gallery-card">
-
-                    <div class="gallery-image">
-
-                        <div class="video-placeholder">
-                            <span>▶</span>
-                        </div>
-
-                    </div>
-
-                    <div class="gallery-info">
-
-                        <p class="gallery-category">
-                            DURGA PUJA
-                        </p>
-
-                        <h3>
-                            Puja Celebration
-                        </h3>
-
-                        <p>
-                            Video highlights from a beautiful
-                            Durga Puja celebration.
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-                <!-- Video 2 -->
-                <article class="gallery-card">
-
-                    <div class="gallery-image">
-
-                        <div class="video-placeholder">
-                            <span>▶</span>
-                        </div>
-
-                    </div>
-
-                    <div class="gallery-info">
-
-                        <p class="gallery-category">
-                            CULTURE
-                        </p>
-
-                        <h3>
-                            Cultural Program
-                        </h3>
-
-                        <p>
-                            Experience music, dance and cultural
-                            performances during Puja.
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-                <!-- Video 3 -->
-                <article class="gallery-card">
-
-                    <div class="gallery-image">
-
-                        <div class="video-placeholder">
-                            <span>▶</span>
-                        </div>
-
-                    </div>
-
-                    <div class="gallery-info">
-
-                        <p class="gallery-category">
-                            MANDIR
-                        </p>
-
-                        <h3>
-                            Mandir Celebration
-                        </h3>
-
-                        <p>
-                            Explore festive moments and celebrations
-                            from Puja mandirs.
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-            </div>
+            <div id="public-video-gallery" class="gallery-grid">
+    <p id="videos-status" class="gallery-message" role="status">
+        Loading videos...
+    </p>
+</div>
 
         </div>
 
@@ -313,6 +260,112 @@
 
 </footer>
 
+
+
+<script>
+async function loadPublicPujaVideos() {
+    const gallery = document.getElementById('public-video-gallery');
+    if (!gallery) return;
+
+    const apiBase = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ? 'http://localhost:3000'
+        : 'https://puja-darshan-api.onrender.com';
+
+    function showStatus(message, isError = false) {
+        const note = document.createElement('p');
+        note.id = 'videos-status';
+        note.className = 'gallery-message';
+        note.setAttribute('role', isError ? 'alert' : 'status');
+        note.textContent = message;
+        gallery.replaceChildren(note);
+    }
+
+    try {
+        const response = await fetch(apiBase + '/api/public/media?type=video');
+        const data = await response.json();
+
+        if (!response.ok || !data.success || !Array.isArray(data.media)) {
+            throw new Error(data.error || 'Video gallery could not be loaded.');
+        }
+
+        const items = data.media.filter(item =>
+            item.resource_type === 'video' &&
+            typeof item.secure_url === 'string' &&
+            item.secure_url.startsWith('https://res.cloudinary.com/')
+        );
+
+        gallery.replaceChildren();
+
+        if (items.length === 0) {
+            showStatus('No videos available yet.');
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        items.forEach((item, index) => {
+            const card = document.createElement('article');
+            card.className = 'gallery-card public-video-card';
+
+            const mediaArea = document.createElement('div');
+            mediaArea.className = 'gallery-image';
+
+            const player = document.createElement('video');
+            player.controls = true;
+            player.preload = 'metadata';
+            player.playsInline = true;
+            player.src = item.secure_url;
+            player.setAttribute('aria-label', 'Puja Darshan video ' + (index + 1));
+
+            const info = document.createElement('div');
+            info.className = 'gallery-info';
+
+            const category = document.createElement('p');
+            category.className = 'gallery-category';
+            category.textContent = 'PUJA DARSHAN VIDEO';
+
+            const title = document.createElement('h3');
+            title.textContent = 'Puja Darshan Video ' + (index + 1);
+
+            const description = document.createElement('p');
+            const format = item.format ? item.format.toUpperCase() : 'VIDEO';
+            let dateText = '';
+
+            if (item.created_at && !Number.isNaN(Date.parse(item.created_at))) {
+                dateText = ' · Uploaded ' +
+                    new Intl.DateTimeFormat(undefined, {
+                        dateStyle: 'medium'
+                    }).format(new Date(item.created_at));
+            }
+
+            description.textContent = format + dateText;
+
+            player.addEventListener('error', () => {
+                if (!mediaArea.querySelector('.video-load-error')) {
+                    const errorNote = document.createElement('p');
+                    errorNote.className = 'video-load-error';
+                    errorNote.setAttribute('role', 'status');
+                    errorNote.textContent =
+                        'This video could not be played. Please try again later.';
+                    mediaArea.appendChild(errorNote);
+                }
+            });
+
+            mediaArea.appendChild(player);
+            info.append(category, title, description);
+            card.append(mediaArea, info);
+            fragment.appendChild(card);
+        });
+
+        gallery.appendChild(fragment);
+    } catch (error) {
+        console.error('Puja Darshan video gallery:', error);
+        showStatus('Unable to load videos right now. Please try again later.', true);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadPublicPujaVideos);
+</script>
 
 <script src="js/script.js"></script>
 

@@ -673,6 +673,92 @@ app.delete('/api/admin/media', requireAdmin, async (req, res, next) => {
     }
 });
 
+
+
+// Public read-only feed for approved gallery media.
+// Cloudinary credentials remain on the server.
+const publicMediaCache = new Map();
+
+app.get('/api/public/media', async (req, res, next) => {
+    try {
+        const type = typeof req.query.type === 'string'
+            ? req.query.type.toLowerCase()
+            : 'all';
+
+        if (!['image', 'video', 'all'].includes(type)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid media type.'
+            });
+        }
+
+        res.set('Cache-Control', 'public, max-age=60');
+
+        const cached = publicMediaCache.get(type);
+        if (cached && cached.expiresAt > Date.now()) {
+            return res.json(cached.body);
+        }
+
+        const resourceTypes = type === 'all'
+            ? ['image', 'video']
+            : [type];
+
+        const results = await Promise.all(
+            resourceTypes.map(resourceType =>
+                cloudinary.api.resources_by_tag(
+                    'puja-darshan-gallery',
+                    {
+                        max_results: 100,
+                        resource_type: resourceType
+                    }
+                )
+            )
+        );
+
+        const media = results
+            .flatMap((result, index) =>
+                (Array.isArray(result.resources) ? result.resources : [])
+                    .map(item => ({
+                        ...item,
+                        resource_type:
+                            item.resource_type || resourceTypes[index]
+                    }))
+            )
+            .filter(item =>
+                resourceTypes.includes(item.resource_type) &&
+                typeof item.public_id === 'string' &&
+                typeof item.secure_url === 'string' &&
+                item.secure_url.startsWith(
+                    'https://res.cloudinary.com/'
+                )
+            )
+            .sort((a, b) =>
+                new Date(b.created_at || 0).getTime() -
+                new Date(a.created_at || 0).getTime()
+            )
+            .map(item => ({
+                public_id: item.public_id,
+                secure_url: item.secure_url,
+                resource_type: item.resource_type,
+                format: item.format || '',
+                created_at: item.created_at || '',
+                width: Number.isFinite(item.width) ? item.width : null,
+                height: Number.isFinite(item.height) ? item.height : null
+            }));
+
+        const body = { success: true, media };
+
+        publicMediaCache.set(type, {
+            expiresAt: Date.now() + 60000,
+            body
+        });
+
+        return res.json(body);
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Mandir directory API.
 function validateMandirInput(body, existing = {}) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
