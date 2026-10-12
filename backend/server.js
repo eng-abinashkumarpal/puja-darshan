@@ -490,6 +490,56 @@ const upload = multer({
 });
 
 
+const MEDIA_UPLOAD_TEMP_DIR = require('path').join(
+    require('os').tmpdir(),
+    'puja-darshan-media-uploads'
+);
+fs.mkdirSync(MEDIA_UPLOAD_TEMP_DIR, { recursive: true });
+
+const mediaUpload = multer({
+    storage: multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, MEDIA_UPLOAD_TEMP_DIR),
+        filename: (_req, file, cb) => {
+            const extension = path.extname(file.originalname || '')
+                .toLowerCase()
+                .replace(/[^.a-z0-9]/g, '')
+                .slice(0, 10);
+            cb(null, require('crypto').randomUUID() + extension);
+        }
+    }),
+    limits: {
+        fileSize: 200 * 1024 * 1024,
+        files: 10
+    },
+    fileFilter: (req, file, cb) => {
+        if (!allowedMimes.has(file.mimetype)) {
+            return cb(new Error('Unsupported file type.'));
+        }
+        cb(null, true);
+    }
+});
+
+function handleAdminMediaUpload(req, res, next) {
+    mediaUpload.array('files', 10)(req, res, error => {
+        if (!error) return next();
+
+        if (error instanceof multer.MulterError &&
+            error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({
+                error: 'Upload exceeds 200 MB. YouTube video uploads may be up to 200 MB; Cloudinary-only uploads remain limited to 50 MB.'
+            });
+        }
+
+        if (error.message === 'Unsupported file type.') {
+            return res.status(400).json({
+                error: 'Allowed formats: JPG, PNG, WebP, MP4, MOV and WebM.'
+            });
+        }
+
+        next(error);
+    });
+}
+
 const submissionImageMimes = new Set([
     'image/jpeg',
     'image/png',
@@ -738,7 +788,7 @@ app.get('/api/admin/test', requireAdmin, (req, res) => {
 app.post(
     '/api/admin/media',
     requireAdmin,
-    upload.array('files', 10),
+    handleAdminMediaUpload,
     async (req, res, next) => {
         try {
             if (!req.files || req.files.length === 0) {
@@ -749,6 +799,13 @@ app.post(
 
             const alsoUploadToYoutube =
                 req.body && req.body.alsoUploadToYoutube === 'true';
+
+            if (!alsoUploadToYoutube &&
+                req.files.some(file => file.size > 50 * 1024 * 1024)) {
+                return res.status(413).json({
+                    error: 'Cloudinary-only uploads are limited to 50 MB per file. Enable YouTube upload for videos up to 200 MB.'
+                });
+            }
 
             let youtubeContext = null;
 
@@ -873,7 +930,12 @@ app.post(
                             }
                         );
 
-                        stream.end(file.buffer);
+                        const source = fs.createReadStream(file.path);
+                        source.on('error', sourceError => {
+                            stream.destroy();
+                            reject(sourceError);
+                        });
+                        source.pipe(stream);
                     });
 
                     return {
@@ -909,9 +971,8 @@ app.post(
                             }
                         },
                         media: {
-                            body: require('stream').Readable.from([
-                                youtubeContext.file.buffer
-                            ])
+                            mimeType: youtubeContext.file.mimetype,
+                            body: fs.createReadStream(youtubeContext.file.path)
                         }
                     });
 
@@ -957,6 +1018,18 @@ app.post(
             });
         } catch (error) {
             next(error);
+        } finally {
+            const temporaryFiles = Array.isArray(req.files) ? req.files : [];
+            await Promise.all(temporaryFiles.map(async file => {
+                if (!file.path) return;
+                try {
+                    await fs.promises.unlink(file.path);
+                } catch (unlinkError) {
+                    if (unlinkError.code !== 'ENOENT') {
+                        console.error('Temporary upload cleanup failed.');
+                    }
+                }
+            }));
         }
     }
 );

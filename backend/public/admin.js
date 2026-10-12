@@ -179,9 +179,16 @@ uploadForm.addEventListener('submit', async event => {
     return;
   }
 
-  const oversizedFile = files.find(file => file.size > 50 * 1024 * 1024);
+  const maxFileSize = (alsoUpload ? 200 : 50) * 1024 * 1024;
+  const oversizedFile = files.find(file => file.size > maxFileSize);
+
   if (oversizedFile) {
-    uploadStatus.textContent = oversizedFile.name + ' exceeds the 50 MB limit.';
+    const limitLabel = alsoUpload
+      ? '200 MB YouTube upload limit'
+      : '50 MB Cloudinary upload limit';
+
+    uploadStatus.textContent =
+      oversizedFile.name + ' exceeds the ' + limitLabel + '.';
     return;
   }
 
