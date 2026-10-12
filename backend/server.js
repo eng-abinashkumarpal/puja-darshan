@@ -602,7 +602,10 @@ function validateMandirInput(body, existing = {}) {
     const limits = {
         name: 150,
         district: 100,
+        zone: 100,
         address: 250,
+        latitude: 30,
+        longitude: 30,
         description: 2000,
         imageUrl: 2000
     };
@@ -630,13 +633,36 @@ function validateMandirInput(body, existing = {}) {
         }
     }
 
+
+    const hasLatitude = Boolean(value.latitude);
+    const hasLongitude = Boolean(value.longitude);
+
+    if (hasLatitude !== hasLongitude) {
+        return { error: 'Provide both temple latitude and longitude.' };
+    }
+
+    if (hasLatitude) {
+        const latitude = Number(value.latitude);
+        const longitude = Number(value.longitude);
+
+        if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+            return { error: 'Temple latitude must be between -90 and 90.' };
+        }
+        if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+            return { error: 'Temple longitude must be between -180 and 180.' };
+        }
+
+        value.latitude = String(latitude);
+        value.longitude = String(longitude);
+    }
+
     return { value };
 }
 
 
 const mandirSubmissionLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
-    limit: 3,
+    limit: isProduction ? 3 : 100,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message: { error: 'Too many submissions. Please try again later.' }
@@ -660,6 +686,33 @@ app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, ne
             return res.status(400).json({ error: checked.error });
         }
 
+        let submitterLocation = null;
+
+        if (body.submitterLocation !== undefined && body.submitterLocation !== null) {
+            const loc = body.submitterLocation;
+
+            if (!loc || typeof loc !== 'object' || Array.isArray(loc)) {
+                return res.status(400).json({ error: 'Invalid shared location.' });
+            }
+
+            const latitude = Number(loc.latitude);
+            const longitude = Number(loc.longitude);
+            const accuracy = loc.accuracy == null ? null : Number(loc.accuracy);
+
+            if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+                !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+                (accuracy !== null && (!Number.isFinite(accuracy) || accuracy < 0 || accuracy > 100000))) {
+                return res.status(400).json({ error: 'Invalid shared location coordinates.' });
+            }
+
+            submitterLocation = {
+                latitude,
+                longitude,
+                accuracy,
+                sharedAt: new Date().toISOString()
+            };
+        }
+
         const [mandirs, submissions] = await Promise.all([
             readMandirs(),
             readMandirSubmissions()
@@ -681,6 +734,7 @@ app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, ne
         const submission = {
             id: require('crypto').randomUUID(),
             ...checked.value,
+            ...(submitterLocation ? { submitterLocation } : {}),
             submittedAt: new Date().toISOString()
         };
 

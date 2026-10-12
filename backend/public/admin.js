@@ -275,6 +275,21 @@ function createMandirAdminCard(item) {
     address.textContent = 'Address: ' + item.address;
     card.appendChild(address);
   }
+  if (item.zone) {
+    const zone = document.createElement('p');
+    zone.textContent = 'Division / Zone: ' + item.zone;
+    card.appendChild(zone);
+  }
+  if (item.latitude !== undefined && item.latitude !== '' &&
+      item.longitude !== undefined && item.longitude !== '') {
+    const map = document.createElement('a');
+    map.href = 'https://www.google.com/maps?q=' +
+      encodeURIComponent(item.latitude + ',' + item.longitude);
+    map.target = '_blank';
+    map.rel = 'noopener noreferrer';
+    map.textContent = 'View temple map';
+    card.appendChild(map);
+  }
   if (item.description) {
     const description = document.createElement('p');
     description.textContent = item.description;
@@ -300,6 +315,9 @@ function createMandirAdminCard(item) {
     document.getElementById('mandir-id').value = item.id;
     document.getElementById('mandir-name').value = item.name || '';
     document.getElementById('mandir-district').value = item.district || '';
+    document.getElementById('mandir-zone').value = item.zone || '';
+    document.getElementById('mandir-latitude').value = item.latitude || '';
+    document.getElementById('mandir-longitude').value = item.longitude || '';
     document.getElementById('mandir-address').value = item.address || '';
     document.getElementById('mandir-image-url').value = item.imageUrl || '';
     document.getElementById('mandir-description').value = item.description || '';
@@ -349,6 +367,37 @@ function createSubmissionAdminCard(item) {
   addText('p', 'Address: ' + (item.address || 'Not provided'));
   addText('p', item.description || 'No description provided.');
   addText('p', 'Submitted: ' + (item.submittedAt || ''));
+  addText('p', 'Division / Zone: ' + (item.zone || 'Not provided'));
+
+  function addReviewMapLink(label, latitude, longitude) {
+    if (latitude == null || longitude == null ||
+        String(latitude).trim() === '' || String(longitude).trim() === '') return;
+
+    const line = document.createElement('p');
+    line.appendChild(document.createTextNode(label + ': '));
+    const link = document.createElement('a');
+    link.href = 'https://www.google.com/maps?q=' +
+      encodeURIComponent(latitude + ',' + longitude);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Open map';
+    line.appendChild(link);
+    card.appendChild(line);
+  }
+
+  addReviewMapLink('Temple map location', item.latitude, item.longitude);
+
+  if (item.submitterLocation) {
+    addReviewMapLink(
+      'Submitter-shared GPS (admin review only)',
+      item.submitterLocation.latitude,
+      item.submitterLocation.longitude
+    );
+    addText('p', 'Location accuracy: ' +
+      (item.submitterLocation.accuracy == null
+        ? 'Not provided'
+        : Math.round(item.submitterLocation.accuracy) + ' metres'));
+  }
 
   if (item.imageUrl) {
     const image = document.createElement('img');
@@ -467,6 +516,9 @@ mandirForm.addEventListener('submit', async event => {
   const payload = {
     name: document.getElementById('mandir-name').value,
     district: document.getElementById('mandir-district').value,
+    zone: document.getElementById('mandir-zone').value,
+    latitude: document.getElementById('mandir-latitude').value,
+    longitude: document.getElementById('mandir-longitude').value,
     address: document.getElementById('mandir-address').value,
     imageUrl: document.getElementById('mandir-image-url').value,
     description: document.getElementById('mandir-description').value

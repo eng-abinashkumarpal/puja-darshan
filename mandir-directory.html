@@ -483,6 +483,29 @@
             overflow: hidden;
         }
 
+
+        .mandir-submission-panel button.secondary {
+            width: 100%;
+            white-space: normal;
+            line-height: 1.5;
+        }
+        #temple-location-status,
+        #submitter-location-status {
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+        }
+        .mandir-map-link {
+            display: inline-block;
+            margin-top: .5rem;
+            color: #f4c76a;
+            font-weight: 600;
+            text-decoration: underline;
+            overflow-wrap: anywhere;
+        }
+        .mandir-submission-panel .help {
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
 </style>
 </head>
 
@@ -557,14 +580,41 @@
                     <label for="submission-district">District *</label>
                     <input id="submission-district" name="district" maxlength="100" required>
 
+                    <label for="submission-zone">Division / Zone (optional)</label>
+                    <input id="submission-zone" name="zone" maxlength="100">
+
                     <label for="submission-address">Address (optional)</label>
                     <input id="submission-address" name="address" maxlength="250">
+
+                    <label for="submission-latitude">Temple latitude (optional)</label>
+                    <input id="submission-latitude" name="latitude" type="number" step="any" min="-90" max="90">
+
+                    <label for="submission-longitude">Temple longitude (optional)</label>
+                    <input id="submission-longitude" name="longitude" type="number" step="any" min="-180" max="180">
+
+                    <button type="button" id="use-temple-location" class="secondary">
+                        Use device location for temple map
+                    </button>
+                    <p id="temple-location-status" role="status" aria-live="polite">
+                        Only use this if you are physically at the temple.
+                    </p>
 
                     <label for="submission-image-url">Image URL (HTTPS, optional)</label>
                     <input id="submission-image-url" name="imageUrl" type="url" maxlength="2000" placeholder="https://…">
 
                     <label for="submission-description">Description (optional)</label>
                     <textarea id="submission-description" name="description" rows="4" maxlength="2000"></textarea>
+
+                    <p class="help">
+                        Optional privacy choice: you may share your current GPS with the
+                        admin for review. It will not be shown on the public listing.
+                    </p>
+                    <button type="button" id="share-submitter-location" class="secondary">
+                        Share my current GPS with admin (optional)
+                    </button>
+                    <p id="submitter-location-status" role="status" aria-live="polite">
+                        Current GPS is not shared.
+                    </p>
 
                     <div class="submission-honeypot" aria-hidden="true">
                         <label for="submission-website">Leave this field empty</label>
@@ -637,6 +687,71 @@
 
     const submissionForm = document.getElementById('mandir-submission-form');
 
+    let sharedSubmitterLocation = null;
+
+    const useTempleLocationButton = document.getElementById('use-temple-location');
+    const templeLocationStatus = document.getElementById('temple-location-status');
+    const shareSubmitterLocationButton = document.getElementById('share-submitter-location');
+    const submitterLocationStatus = document.getElementById('submitter-location-status');
+
+    function requestBrowserLocation(onSuccess, statusElement) {
+        if (!navigator.geolocation) {
+            statusElement.textContent = 'Location is unavailable in this browser. You may enter coordinates manually.';
+            return;
+        }
+
+        statusElement.textContent = 'Waiting for your location permission…';
+
+        navigator.geolocation.getCurrentPosition(
+            position => onSuccess(position),
+            error => {
+                statusElement.textContent =
+                    error.code === 1
+                        ? 'Location permission was denied. You can continue without sharing GPS.'
+                        : 'Could not get location. You can enter coordinates manually or continue without GPS.';
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        );
+    }
+
+    if (useTempleLocationButton) {
+        useTempleLocationButton.addEventListener('click', () => {
+            requestBrowserLocation(position => {
+                document.getElementById('submission-latitude').value =
+                    position.coords.latitude.toFixed(6);
+                document.getElementById('submission-longitude').value =
+                    position.coords.longitude.toFixed(6);
+                templeLocationStatus.textContent =
+                    'Temple map coordinates filled. Confirm you are at the temple before submitting.';
+            }, templeLocationStatus);
+        });
+    }
+
+    if (shareSubmitterLocationButton) {
+        shareSubmitterLocationButton.addEventListener('click', () => {
+            if (sharedSubmitterLocation) {
+                sharedSubmitterLocation = null;
+                submitterLocationStatus.textContent = 'Current GPS is not shared.';
+                shareSubmitterLocationButton.textContent =
+                    'Share my current GPS with admin (optional)';
+                return;
+            }
+
+            requestBrowserLocation(position => {
+                sharedSubmitterLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+                submitterLocationStatus.textContent =
+                    'GPS shared for admin review only. It will not appear in the public listing. Tap the button again to remove it.';
+                shareSubmitterLocationButton.textContent = 'Remove shared GPS';
+            }, submitterLocationStatus);
+        });
+    }
+
+
+
     if (submissionForm) {
         const submissionStatus = document.getElementById('mandir-submission-status');
         const submissionButton = document.getElementById('mandir-submission-button');
@@ -647,7 +762,11 @@
             const payload = {
                 name: document.getElementById('submission-name').value,
                 district: document.getElementById('submission-district').value,
+                zone: document.getElementById('submission-zone').value,
                 address: document.getElementById('submission-address').value,
+                latitude: document.getElementById('submission-latitude').value,
+                longitude: document.getElementById('submission-longitude').value,
+                submitterLocation: sharedSubmitterLocation,
                 imageUrl: document.getElementById('submission-image-url').value,
                 description: document.getElementById('submission-description').value,
                 website: document.getElementById('submission-website').value
@@ -673,6 +792,12 @@
                 }
 
                 submissionForm.reset();
+                sharedSubmitterLocation = null;
+                submitterLocationStatus.textContent = 'Current GPS is not shared.';
+                shareSubmitterLocationButton.textContent =
+                    'Share my current GPS with admin (optional)';
+                templeLocationStatus.textContent =
+                    'Only use this if you are physically at the temple.';
                 submissionStatus.textContent =
                     'Thank you! Your mandir details were submitted and are awaiting admin review.';
             } catch (error) {
@@ -692,6 +817,9 @@
     function createCard(mandir) {
         const name = text(mandir.name);
         const district = text(mandir.district);
+        const zone = text(mandir.zone);
+        const latitude = text(mandir.latitude);
+        const longitude = text(mandir.longitude);
         const address = text(mandir.address);
         const description = text(mandir.description);
         const imageUrl = text(mandir.imageUrl);
@@ -754,6 +882,24 @@
         location.textContent = '📍 ' + [district, address].filter(Boolean).join(', ');
 
         content.append(label, heading, location);
+
+        if (zone) {
+            const zoneLine = document.createElement('p');
+            zoneLine.className = 'mandir-location';
+            zoneLine.textContent = 'Division / Zone: ' + zone;
+            content.appendChild(zoneLine);
+        }
+
+        if (latitude !== '' && longitude !== '') {
+            const mapLink = document.createElement('a');
+            mapLink.className = 'mandir-map-link';
+            mapLink.href = 'https://www.google.com/maps?q=' +
+                encodeURIComponent(latitude + ',' + longitude);
+            mapLink.target = '_blank';
+            mapLink.rel = 'noopener noreferrer';
+            mapLink.textContent = 'View temple map';
+            content.appendChild(mapLink);
+        }
 
         if (description) {
             const details = document.createElement('p');
