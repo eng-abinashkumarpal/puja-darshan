@@ -275,6 +275,79 @@ const upload = multer({
     }
 });
 
+
+const submissionImageMimes = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+]);
+
+const submissionImageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1,
+        fields: 20,
+        fieldSize: 10 * 1024
+    },
+    fileFilter: (req, file, cb) => {
+        if (!submissionImageMimes.has(file.mimetype)) {
+            return cb(new Error('Only JPG, PNG or WebP images are allowed.'));
+        }
+        cb(null, true);
+    }
+});
+
+function parseSubmissionImage(req, res, next) {
+    submissionImageUpload.single('image')(req, res, error => {
+        if (!error) return next();
+
+        const tooLarge =
+            error instanceof multer.MulterError &&
+            error.code === 'LIMIT_FILE_SIZE';
+
+        return res.status(tooLarge ? 413 : 400).json({
+            error: tooLarge
+                ? 'Image must be 5 MB or smaller.'
+                : (error.message || 'Image upload failed. Use JPG, PNG or WebP.')
+        });
+    });
+}
+
+function hasValidSubmissionImageSignature(buffer) {
+    if (!Buffer.isBuffer(buffer)) return false;
+
+    const jpeg = buffer.length >= 3 &&
+        buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+
+    const png = buffer.length >= 8 &&
+        buffer.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+        );
+
+    const webp = buffer.length >= 12 &&
+        buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+        buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+
+    return jpeg || png || webp;
+}
+
+async function uploadMandirSubmissionImage(file) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({
+            folder: 'puja-darshan/mandir-submissions',
+            resource_type: 'image',
+            tags: ['puja-darshan-pending-submission'],
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+        }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        });
+
+        stream.end(file.buffer);
+    });
+}
+
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
@@ -672,7 +745,7 @@ function normalizeMandirKey(value) {
     return String(value || '').trim().toLowerCase();
 }
 
-app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, next) => {
+app.post('/api/mandir-submissions', mandirSubmissionLimiter, parseSubmissionImage, async (req, res, next) => {
     try {
         const body = req.body || {};
 
@@ -681,15 +754,34 @@ app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, ne
             return res.status(400).json({ error: 'Submission could not be accepted.' });
         }
 
+        if (req.file && typeof body.imageUrl === 'string' && body.imageUrl.trim()) {
+            return res.status(400).json({
+                error: 'Choose either an uploaded photo or an image URL, not both.'
+            });
+        }
+
         const checked = validateMandirInput(body);
         if (checked.error) {
             return res.status(400).json({ error: checked.error });
         }
 
         let submitterLocation = null;
+        let rawSubmitterLocation = body.submitterLocation;
 
-        if (body.submitterLocation !== undefined && body.submitterLocation !== null) {
-            const loc = body.submitterLocation;
+        if (typeof rawSubmitterLocation === 'string') {
+            if (!rawSubmitterLocation.trim()) {
+                rawSubmitterLocation = null;
+            } else {
+                try {
+                    rawSubmitterLocation = JSON.parse(rawSubmitterLocation);
+                } catch {
+                    return res.status(400).json({ error: 'Invalid shared location.' });
+                }
+            }
+        }
+
+        if (rawSubmitterLocation !== undefined && rawSubmitterLocation !== null) {
+            const loc = rawSubmitterLocation;
 
             if (!loc || typeof loc !== 'object' || Array.isArray(loc)) {
                 return res.status(400).json({ error: 'Invalid shared location.' });
@@ -731,15 +823,46 @@ app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, ne
             });
         }
 
+        let uploadedImage = null;
+
+        if (req.file) {
+            if (!hasValidSubmissionImageSignature(req.file.buffer)) {
+                return res.status(400).json({
+                    error: 'The selected file is not a valid JPG, PNG or WebP image.'
+                });
+            }
+
+            uploadedImage = await uploadMandirSubmissionImage(req.file);
+        }
+
         const submission = {
             id: require('crypto').randomUUID(),
             ...checked.value,
+            ...(uploadedImage ? {
+                imageUrl: uploadedImage.secure_url,
+                imagePublicId: uploadedImage.public_id
+            } : {}),
             ...(submitterLocation ? { submitterLocation } : {}),
             submittedAt: new Date().toISOString()
         };
 
         submissions.unshift(submission);
-        await writeMandirSubmissions(submissions);
+
+        try {
+            await writeMandirSubmissions(submissions);
+        } catch (storageError) {
+            if (uploadedImage && uploadedImage.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(
+                        uploadedImage.public_id,
+                        { resource_type: 'image' }
+                    );
+                } catch (cleanupError) {
+                    console.error('Pending image cleanup failed:', cleanupError.message);
+                }
+            }
+            throw storageError;
+        }
 
         return res.status(201).json({
             success: true,
@@ -822,8 +945,20 @@ app.delete('/api/admin/mandir-submissions/:id', requireAdmin, async (req, res, n
             return res.status(404).json({ error: 'Submission not found.' });
         }
 
+        const rejectedSubmission = submissions[index];
         submissions.splice(index, 1);
         await writeMandirSubmissions(submissions);
+
+        if (rejectedSubmission.imagePublicId) {
+            try {
+                await cloudinary.uploader.destroy(
+                    rejectedSubmission.imagePublicId,
+                    { resource_type: 'image' }
+                );
+            } catch (cleanupError) {
+                console.error('Rejected submission image cleanup failed:', cleanupError.message);
+            }
+        }
 
         res.json({ success: true, message: 'Submission rejected.' });
     } catch (error) {

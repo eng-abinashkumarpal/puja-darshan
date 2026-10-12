@@ -506,6 +506,39 @@
             line-height: 1.65;
             overflow-wrap: anywhere;
         }
+
+        .submission-image-preview {
+            display: grid;
+            gap: .65rem;
+            margin-top: .5rem;
+            padding: .75rem;
+            border: 1px solid #c8b6a6;
+            border-radius: 10px;
+            background: #f7eee6;
+            overflow: hidden;
+        }
+        .submission-image-preview[hidden] {
+            display: none !important;
+        }
+        .submission-image-preview img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            background: #211513;
+            border-radius: 8px;
+        }
+        #submission-image-preview-name {
+            margin: 0;
+            overflow-wrap: anywhere;
+            color: #33251e;
+            font-size: .9rem;
+        }
+        #submission-image-status {
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+        }
 </style>
 </head>
 
@@ -599,7 +632,24 @@
                         Only use this if you are physically at the temple.
                     </p>
 
-                    <label for="submission-image-url">Image URL (HTTPS, optional)</label>
+                    <label for="submission-image-file">Upload a temple photo from your phone (optional)</label>
+                    <input
+                        id="submission-image-file"
+                        name="image"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                    >
+                    <p class="help">Choose JPG, PNG or WebP. Maximum 5 MB per photo.</p>
+                    <div id="submission-image-preview-wrapper" class="submission-image-preview" hidden>
+                        <img id="submission-image-preview" alt="Selected temple photo preview">
+                        <p id="submission-image-preview-name"></p>
+                        <button id="remove-submission-image" type="button" class="secondary">
+                            Remove selected photo
+                        </button>
+                    </div>
+                    <p id="submission-image-status" role="status" aria-live="polite"></p>
+
+                    <label for="submission-image-url">Or paste an image URL (HTTPS, optional)</label>
                     <input id="submission-image-url" name="imageUrl" type="url" maxlength="2000" placeholder="https://…">
 
                     <label for="submission-description">Description (optional)</label>
@@ -755,9 +805,82 @@
     if (submissionForm) {
         const submissionStatus = document.getElementById('mandir-submission-status');
         const submissionButton = document.getElementById('mandir-submission-button');
+        const submissionImageInput = document.getElementById('submission-image-file');
+        const submissionImageUrlInput = document.getElementById('submission-image-url');
+        const submissionImagePreviewWrapper = document.getElementById('submission-image-preview-wrapper');
+        const submissionImagePreview = document.getElementById('submission-image-preview');
+        const submissionImagePreviewName = document.getElementById('submission-image-preview-name');
+        const submissionImageStatus = document.getElementById('submission-image-status');
+        const removeSubmissionImageButton = document.getElementById('remove-submission-image');
+        let submissionPreviewObjectUrl = null;
+
+        function clearSelectedSubmissionImage() {
+            if (submissionPreviewObjectUrl) {
+                URL.revokeObjectURL(submissionPreviewObjectUrl);
+                submissionPreviewObjectUrl = null;
+            }
+            submissionImageInput.value = '';
+            submissionImagePreview.removeAttribute('src');
+            submissionImagePreviewName.textContent = '';
+            submissionImagePreviewWrapper.hidden = true;
+        }
+
+        submissionImageInput.addEventListener('change', () => {
+            const file = submissionImageInput.files && submissionImageInput.files[0];
+
+            if (!file) {
+                clearSelectedSubmissionImage();
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+            if (!allowedTypes.includes(file.type)) {
+                clearSelectedSubmissionImage();
+                submissionImageStatus.textContent = 'Choose a JPG, PNG or WebP image.';
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                clearSelectedSubmissionImage();
+                submissionImageStatus.textContent = 'Image must be 5 MB or smaller.';
+                return;
+            }
+
+            clearSelectedSubmissionImage();
+            submissionImageInput.files = (() => {
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                return transfer.files;
+            })();
+
+            submissionImageUrlInput.value = '';
+            submissionPreviewObjectUrl = URL.createObjectURL(file);
+            submissionImagePreview.src = submissionPreviewObjectUrl;
+            submissionImagePreviewName.textContent =
+                file.name + ' · ' + (file.size / 1024).toFixed(0) + ' KB';
+            submissionImagePreviewWrapper.hidden = false;
+            submissionImageStatus.textContent =
+                'Photo selected. It will upload securely when you submit the form.';
+        });
+
+        submissionImageUrlInput.addEventListener('input', () => {
+            if (submissionImageUrlInput.value.trim() && submissionImageInput.files.length) {
+                clearSelectedSubmissionImage();
+                submissionImageStatus.textContent =
+                    'Image URL selected instead of an uploaded photo.';
+            }
+        });
+
+        removeSubmissionImageButton.addEventListener('click', () => {
+            clearSelectedSubmissionImage();
+            submissionImageStatus.textContent = 'Selected photo removed.';
+        });
 
         submissionForm.addEventListener('submit', async event => {
             event.preventDefault();
+
+            const selectedImage = submissionImageInput.files[0] || null;
 
             const payload = {
                 name: document.getElementById('submission-name').value,
@@ -767,7 +890,7 @@
                 latitude: document.getElementById('submission-latitude').value,
                 longitude: document.getElementById('submission-longitude').value,
                 submitterLocation: sharedSubmitterLocation,
-                imageUrl: document.getElementById('submission-image-url').value,
+                imageUrl: submissionImageUrlInput.value,
                 description: document.getElementById('submission-description').value,
                 website: document.getElementById('submission-website').value
             };
@@ -776,12 +899,25 @@
             submissionStatus.textContent = 'Submitting for admin review…';
 
             try {
+                const formData = new FormData();
+
+                for (const [key, value] of Object.entries(payload)) {
+                    if (key === 'submitterLocation') {
+                        if (value) formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value == null ? '' : String(value));
+                    }
+                }
+
+                if (selectedImage) {
+                    formData.append('image', selectedImage);
+                }
+
                 const response = await fetch(
                     API_URL.replace(/\/api\/mandirs$/, '/api/mandir-submissions'),
                     {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
+                        body: formData,
                         cache: 'no-store'
                     }
                 );
@@ -792,6 +928,8 @@
                 }
 
                 submissionForm.reset();
+                clearSelectedSubmissionImage();
+                submissionImageStatus.textContent = '';
                 sharedSubmitterLocation = null;
                 submitterLocationStatus.textContent = 'Current GPS is not shared.';
                 shareSubmitterLocationButton.textContent =
@@ -890,14 +1028,26 @@
             content.appendChild(zoneLine);
         }
 
-        if (latitude !== '' && longitude !== '') {
+        const hasTempleCoordinates =
+            latitude !== '' && longitude !== '';
+
+        const mapSearch = hasTempleCoordinates
+            ? latitude + ',' + longitude
+            : [name, address, zone, district, 'Bangladesh']
+                .filter(Boolean)
+                .join(', ');
+
+        if (mapSearch) {
             const mapLink = document.createElement('a');
             mapLink.className = 'mandir-map-link';
-            mapLink.href = 'https://www.google.com/maps?q=' +
-                encodeURIComponent(latitude + ',' + longitude);
+            mapLink.href =
+                'https://www.google.com/maps/search/?api=1&query=' +
+                encodeURIComponent(mapSearch);
             mapLink.target = '_blank';
             mapLink.rel = 'noopener noreferrer';
-            mapLink.textContent = 'View temple map';
+            mapLink.textContent = hasTempleCoordinates
+                ? 'View temple location on Google Maps'
+                : 'Find this mandir on Google Maps';
             content.appendChild(mapLink);
         }
 
