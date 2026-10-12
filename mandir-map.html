@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore Hindu mandirs in Bangladesh on an interactive map. Find temple locations and directions.">
+  <title>Mandir Map Bangladesh | Puja Darshan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    .map-page { padding: 2rem 0 3rem; }
+    .map-intro { max-width: 850px; margin-bottom: 1.5rem; }
+    .map-filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 1.25rem 0;
+    }
+    .map-filters input, .map-filters select {
+      width: 100%; min-width: 0; box-sizing: border-box;
+      padding: .8rem; border-radius: 8px; font: inherit;
+    }
+    #mandir-map {
+      height: min(68vh, 650px); min-height: 380px;
+      width: 100%; border-radius: 14px; z-index: 0;
+      border: 1px solid #d5c7bb; background: #eee6dd;
+    }
+    .map-status { margin: 1rem 0; line-height: 1.7; }
+    .unmapped-list {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem; margin-top: 1rem;
+    }
+    .unmapped-card {
+      padding: 1rem; border: 1px solid #d5c7bb; border-radius: 12px;
+      overflow-wrap: anywhere;
+    }
+    .unmapped-card h3 { margin-top: 0; }
+    .map-action { display: inline-block; margin: .4rem .75rem .1rem 0; }
+    .map-note { line-height: 1.7; margin-top: 1rem; }
+    .popup-title { font-weight: 700; margin: 0 0 .4rem; }
+    @media (max-width: 760px) {
+      .map-filters { grid-template-columns: minmax(0, 1fr); }
+      #mandir-map { height: 58vh; min-height: 340px; }
+    }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-wrapper">
+    <a href="index.html" class="logo" aria-label="Puja Darshan Home">
+      <span class="logo-symbol">ॐ</span><span>Puja Darshan</span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false"
+      aria-controls="main-navigation">
+      <span class="menu-toggle-label">Menu</span><span aria-hidden="true">☰</span>
+    </button>
+    <nav class="main-nav" id="main-navigation" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="puja-directory.html">Puja Directory</a>
+      <a href="mandir-directory.html">Mandir Directory</a>
+      <a href="mandir-map.html" class="active" aria-current="page">Mandir Map</a>
+      <a href="gallery.html">Photo Gallery</a>
+      <a href="videos.html">Videos</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <p class="eyebrow">PUJA DARSHAN • BANGLADESH</p>
+      <h1>Explore Mandirs <span>on the Map</span></h1>
+      <p class="page-intro">Find temple locations and open directions. Pins are shown only for records with valid coordinates.</p>
+    </div>
+  </section>
+
+  <section class="map-page">
+    <div class="container">
+      <div class="map-intro">
+        <h2>Find a Mandir</h2>
+        <p>Search by mandir name, address, division or district. Choose a division first to narrow the district list.</p>
+      </div>
+
+      <div class="map-filters">
+        <input type="search" id="map-search" placeholder="Search name or location..."
+          aria-label="Search mandirs on map">
+        <select id="map-zone-filter" aria-label="Filter by division or zone">
+          <option value="">All Divisions / Zones</option>
+        </select>
+        <select id="map-district-filter" aria-label="Filter by district">
+          <option value="">All Districts</option>
+        </select>
+      </div>
+
+      <p id="map-status" class="map-status" role="status" aria-live="polite">Loading mandir locations…</p>
+      <div id="mandir-map" role="region" aria-label="Interactive map showing verified mandir coordinates"></div>
+
+      <p class="map-note">A pin appears only when a listing has valid temple latitude and longitude. Listings without verified coordinates are shown separately below; their Google Maps links search by name and address and may require confirmation.</p>
+
+      <section aria-labelledby="unmapped-heading">
+        <h2 id="unmapped-heading">Mandirs without GPS coordinates</h2>
+        <p id="unmapped-status">Loading…</p>
+        <div id="unmapped-list" class="unmapped-list"></div>
+      </section>
+      <p class="map-note"><a href="mandir-directory.html">Browse the full Mandir Directory →</a></p>
+    </div>
+  </section>
+</main>
+
+<script src="js/script.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:3000/api/mandirs'
+    : 'https://puja-darshan-api.onrender.com/api/mandirs';
+
+  const searchInput = document.getElementById('map-search');
+  const zoneFilter = document.getElementById('map-zone-filter');
+  const districtFilter = document.getElementById('map-district-filter');
+  const status = document.getElementById('map-status');
+  const unmappedStatus = document.getElementById('unmapped-status');
+  const unmappedList = document.getElementById('unmapped-list');
+
+  const map = L.map('mandir-map', { scrollWheelZoom: false })
+    .setView([23.685, 90.3563], 7);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  const markerLayer = L.layerGroup().addTo(map);
+  let allMandirs = [];
+
+  function text(value) {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  function coordinate(value, min, max) {
+    if (value === null || value === undefined || String(value).trim() === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) && n >= min && n <= max ? n : null;
+  }
+
+  function normalize(value) {
+    return String(value || '').normalize('NFKC').toLocaleLowerCase().trim();
+  }
+
+  function mapQuery(item) {
+    return [text(item.name), text(item.address), text(item.zone), text(item.district), 'Bangladesh']
+      .filter(Boolean).join(', ');
+  }
+
+  function mapsSearchUrl(query) {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  }
+
+  function directionsUrl(destination) {
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination);
+  }
+
+  function addPopupText(container, tag, value, className) {
+    if (!value) return;
+    const node = document.createElement(tag);
+    node.textContent = value;
+    if (className) node.className = className;
+    container.appendChild(node);
+  }
+
+  function createPopup(item, lat, lng) {
+    const popup = document.createElement('div');
+    addPopupText(popup, 'p', text(item.name) || 'Unnamed Mandir', 'popup-title');
+    addPopupText(popup, 'p', [text(item.address), text(item.district), text(item.zone)]
+      .filter(Boolean).join(', '));
+
+    const searchLink = document.createElement('a');
+    searchLink.href = mapsSearchUrl(lat + ',' + lng);
+    searchLink.target = '_blank';
+    searchLink.rel = 'noopener noreferrer';
+    searchLink.textContent = 'View on Google Maps';
+    popup.appendChild(searchLink);
+
+    popup.appendChild(document.createTextNode(' · '));
+
+    const directionsLink = document.createElement('a');
+    directionsLink.href = directionsUrl(lat + ',' + lng);
+    directionsLink.target = '_blank';
+    directionsLink.rel = 'noopener noreferrer';
+    directionsLink.textContent = 'Get directions';
+    popup.appendChild(directionsLink);
+    return popup;
+  }
+
+  function updateFilters() {
+    const previousZone = zoneFilter.value;
+    const previousDistrict = districtFilter.value;
+
+    const zones = [...new Set(allMandirs.map(item => text(item.zone)).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+
+    zoneFilter.replaceChildren(new Option('All Divisions / Zones', ''));
+    zones.forEach(zone => zoneFilter.add(new Option(zone, zone)));
+    zoneFilter.value = zones.includes(previousZone) ? previousZone : '';
+
+    const matching = zoneFilter.value
+      ? allMandirs.filter(item => text(item.zone) === zoneFilter.value)
+      : allMandirs;
+
+    const counts = new Map();
+    matching.forEach(item => {
+      const district = text(item.district);
+      if (district) counts.set(district, (counts.get(district) || 0) + 1);
+    });
+
+    districtFilter.replaceChildren(new Option('All Districts', ''));
+    [...counts.keys()].sort((a, b) => a.localeCompare(b)).forEach(district => {
+      districtFilter.add(new Option(district + ' (' + counts.get(district) + ')', district));
+    });
+    districtFilter.value = counts.has(previousDistrict) ? previousDistrict : '';
+  }
+
+  function filterItems() {
+    const terms = normalize(searchInput.value).split(/\s+/).filter(Boolean);
+    return allMandirs.filter(item => {
+      const searchable = normalize([
+        item.name, item.address, item.district, item.zone, item.description
+      ].map(text).join(' '));
+
+      return terms.every(term => searchable.includes(term)) &&
+        (!zoneFilter.value || text(item.zone) === zoneFilter.value) &&
+        (!districtFilter.value || text(item.district) === districtFilter.value);
+    });
+  }
+
+  function renderMap() {
+    const filtered = filterItems();
+    markerLayer.clearLayers();
+    unmappedList.replaceChildren();
+
+    let located = 0;
+    let unlocated = 0;
+    const bounds = [];
+
+    filtered.forEach(item => {
+      const lat = coordinate(item.latitude, -90, 90);
+      const lng = coordinate(item.longitude, -180, 180);
+
+      if (lat !== null && lng !== null) {
+        located++;
+        bounds.push([lat, lng]);
+        L.marker([lat, lng])
+          .bindPopup(createPopup(item, lat, lng))
+          .addTo(markerLayer);
+        return;
+      }
+
+      unlocated++;
+      const card = document.createElement('article');
+      card.className = 'unmapped-card';
+      addPopupText(card, 'h3', text(item.name) || 'Unnamed Mandir');
+      addPopupText(card, 'p', [text(item.address), text(item.district), text(item.zone)]
+        .filter(Boolean).join(', '));
+
+      const link = document.createElement('a');
+      link.className = 'map-action';
+      link.href = mapsSearchUrl(mapQuery(item));
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Search on Google Maps';
+      card.appendChild(link);
+      unmappedList.appendChild(card);
+    });
+
+    if (bounds.length) {
+      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+      if (bounds.length === 1) map.setZoom(14);
+    } else {
+      map.setView([23.685, 90.3563], 7);
+    }
+
+    status.textContent = 'Showing ' + filtered.length + ' mandir(s): ' +
+      located + ' with map pins and ' + unlocated + ' without verified GPS coordinates.';
+    unmappedStatus.textContent = unlocated
+      ? unlocated + ' listing(s) do not have verified GPS coordinates.'
+      : 'All currently filtered listings have GPS coordinates.';
+  }
+
+  searchInput.addEventListener('input', renderMap);
+  zoneFilter.addEventListener('change', () => {
+    updateFilters();
+    renderMap();
+  });
+  districtFilter.addEventListener('change', renderMap);
+
+  async function init() {
+    try {
+      const response = await fetch(API_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Mandir data could not be loaded.');
+      const data = await response.json();
+      allMandirs = Array.isArray(data.mandirs) ? data.mandirs : [];
+      updateFilters();
+      renderMap();
+      setTimeout(() => map.invalidateSize(), 100);
+    } catch (error) {
+      status.textContent = error.message || 'Unable to load mandir locations.';
+      unmappedStatus.textContent = 'Mandir data is unavailable.';
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
