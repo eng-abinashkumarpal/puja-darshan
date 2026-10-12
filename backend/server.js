@@ -51,6 +51,41 @@ async function writeMandirs(mandirs) {
 
 
 
+
+const MANDIR_SUBMISSIONS_REDIS_KEY = 'puja-darshan:mandir-submissions';
+const MANDIR_SUBMISSIONS_FILE = path.join(MANDIR_DATA_DIR, 'mandir-submissions.json');
+
+async function readMandirSubmissions() {
+    if (redisClient) {
+        const saved = await redisClient.get(MANDIR_SUBMISSIONS_REDIS_KEY);
+        if (!saved) return [];
+        const data = JSON.parse(saved);
+        return Array.isArray(data) ? data : [];
+    }
+
+    try {
+        const data = JSON.parse(fs.readFileSync(MANDIR_SUBMISSIONS_FILE, 'utf8'));
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    }
+}
+
+async function writeMandirSubmissions(submissions) {
+    const saved = JSON.stringify(submissions, null, 2);
+
+    if (redisClient) {
+        await redisClient.set(MANDIR_SUBMISSIONS_REDIS_KEY, saved);
+        return;
+    }
+
+    fs.mkdirSync(MANDIR_DATA_DIR, { recursive: true });
+    const tempFile = MANDIR_SUBMISSIONS_FILE + '.tmp';
+    fs.writeFileSync(tempFile, saved, { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tempFile, MANDIR_SUBMISSIONS_FILE);
+}
+
 const ADMIN_PASSWORD_REDIS_KEY = 'puja-darshan:admin-password-hash-b64';
 const ADMIN_PASSWORD_FILE = path.join(MANDIR_DATA_DIR, 'admin-password.json');
 
@@ -597,6 +632,150 @@ function validateMandirInput(body, existing = {}) {
 
     return { value };
 }
+
+
+const mandirSubmissionLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 3,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many submissions. Please try again later.' }
+});
+
+function normalizeMandirKey(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+app.post('/api/mandir-submissions', mandirSubmissionLimiter, async (req, res, next) => {
+    try {
+        const body = req.body || {};
+
+        // Hidden field used as a basic bot honeypot.
+        if (typeof body.website === 'string' && body.website.trim()) {
+            return res.status(400).json({ error: 'Submission could not be accepted.' });
+        }
+
+        const checked = validateMandirInput(body);
+        if (checked.error) {
+            return res.status(400).json({ error: checked.error });
+        }
+
+        const [mandirs, submissions] = await Promise.all([
+            readMandirs(),
+            readMandirSubmissions()
+        ]);
+
+        const nameKey = normalizeMandirKey(checked.value.name);
+        const districtKey = normalizeMandirKey(checked.value.district);
+        const alreadyExists = [...mandirs, ...submissions].some(item =>
+            normalizeMandirKey(item.name) === nameKey &&
+            normalizeMandirKey(item.district) === districtKey
+        );
+
+        if (alreadyExists) {
+            return res.status(409).json({
+                error: 'A mandir with this name and district is already listed or awaiting review.'
+            });
+        }
+
+        const submission = {
+            id: require('crypto').randomUUID(),
+            ...checked.value,
+            submittedAt: new Date().toISOString()
+        };
+
+        submissions.unshift(submission);
+        await writeMandirSubmissions(submissions);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Submission received for admin review.'
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+app.get('/api/admin/mandir-submissions', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readMandirSubmissions();
+        res.set('Cache-Control', 'no-store');
+        res.json({ success: true, submissions });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/admin/mandir-submissions/:id/approve', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readMandirSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'Submission not found.' });
+        }
+
+        const checked = validateMandirInput(submissions[index]);
+        if (checked.error) {
+            return res.status(400).json({ error: checked.error });
+        }
+
+        const mandirs = await readMandirs();
+        const nameKey = normalizeMandirKey(checked.value.name);
+        const districtKey = normalizeMandirKey(checked.value.district);
+
+        const duplicate = mandirs.some(item =>
+            normalizeMandirKey(item.name) === nameKey &&
+            normalizeMandirKey(item.district) === districtKey
+        );
+
+        if (duplicate) {
+            return res.status(409).json({
+                error: 'A mandir with this name and district already exists. Reject this duplicate submission if appropriate.'
+            });
+        }
+
+        const now = new Date().toISOString();
+        const mandir = {
+            id: require('crypto').randomUUID(),
+            ...checked.value,
+            createdAt: now,
+            updatedAt: now
+        };
+
+        mandirs.push(mandir);
+        await writeMandirs(mandirs);
+
+        submissions.splice(index, 1);
+        await writeMandirSubmissions(submissions);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Submission approved and published.',
+            mandir
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete('/api/admin/mandir-submissions/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readMandirSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'Submission not found.' });
+        }
+
+        submissions.splice(index, 1);
+        await writeMandirSubmissions(submissions);
+
+        res.json({ success: true, message: 'Submission rejected.' });
+    } catch (error) {
+        next(error);
+    }
+});
 
 app.get('/api/mandirs', async (req, res, next) => {
     try {

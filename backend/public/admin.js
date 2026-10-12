@@ -25,6 +25,7 @@ function showSignedIn(username) {
   message.textContent = '';
   loadGallery();
   loadMandirs();
+  loadSubmissions();
 }
 
 async function apiRequest(url, options = {}) {
@@ -246,6 +247,9 @@ refreshButton.addEventListener('click', loadGallery);
 const mandirForm = document.getElementById('mandir-form');
 const mandirList = document.getElementById('mandir-list');
 const mandirStatus = document.getElementById('mandir-status');
+const pendingSubmissionList = document.getElementById('pending-submission-list');
+const pendingSubmissionStatus = document.getElementById('pending-submission-status');
+const refreshSubmissionsButton = document.getElementById('refresh-submissions-button');
 const saveMandirButton = document.getElementById('save-mandir-button');
 const cancelMandirEditButton = document.getElementById('cancel-mandir-edit');
 
@@ -327,6 +331,118 @@ function createMandirAdminCard(item) {
   card.appendChild(actions);
   return card;
 }
+
+
+function createSubmissionAdminCard(item) {
+  const card = document.createElement('article');
+  card.className = 'mandir-admin-card';
+
+  function addText(tag, value) {
+    if (!value) return;
+    const element = document.createElement(tag);
+    element.textContent = value;
+    card.appendChild(element);
+  }
+
+  addText('h4', item.name);
+  addText('p', 'District: ' + (item.district || ''));
+  addText('p', 'Address: ' + (item.address || 'Not provided'));
+  addText('p', item.description || 'No description provided.');
+  addText('p', 'Submitted: ' + (item.submittedAt || ''));
+
+  if (item.imageUrl) {
+    const image = document.createElement('img');
+    image.src = item.imageUrl;
+    image.alt = item.name || 'Submitted mandir image';
+    image.loading = 'lazy';
+    image.className = 'mandir-admin-image';
+    image.addEventListener('error', () => { image.hidden = true; });
+    card.appendChild(image);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'mandir-card-actions';
+
+  const approve = document.createElement('button');
+  approve.type = 'button';
+  approve.textContent = 'Approve & Publish';
+
+  const reject = document.createElement('button');
+  reject.type = 'button';
+  reject.className = 'danger';
+  reject.textContent = 'Reject';
+
+  approve.addEventListener('click', async () => {
+    if (!window.confirm('Approve and publish "' + item.name + '"?')) return;
+    approve.disabled = true;
+    reject.disabled = true;
+    pendingSubmissionStatus.textContent = 'Approving submission…';
+
+    try {
+      const result = await apiRequest(
+        '/api/admin/mandir-submissions/' + encodeURIComponent(item.id) + '/approve',
+        { method: 'POST' }
+      );
+      await Promise.all([loadSubmissions(), loadMandirs()]);
+      pendingSubmissionStatus.textContent =
+        'Approved and published: ' + result.mandir.name;
+    } catch (error) {
+      pendingSubmissionStatus.textContent = error.message;
+      approve.disabled = false;
+      reject.disabled = false;
+    }
+  });
+
+  reject.addEventListener('click', async () => {
+    if (!window.confirm('Reject and remove "' + item.name + '" from the review queue?')) return;
+    approve.disabled = true;
+    reject.disabled = true;
+    pendingSubmissionStatus.textContent = 'Rejecting submission…';
+
+    try {
+      await apiRequest(
+        '/api/admin/mandir-submissions/' + encodeURIComponent(item.id),
+        { method: 'DELETE' }
+      );
+      await loadSubmissions();
+      pendingSubmissionStatus.textContent = 'Submission rejected.';
+    } catch (error) {
+      pendingSubmissionStatus.textContent = error.message;
+      approve.disabled = false;
+      reject.disabled = false;
+    }
+  });
+
+  actions.append(approve, reject);
+  card.appendChild(actions);
+  return card;
+}
+
+async function loadSubmissions() {
+  pendingSubmissionList.replaceChildren();
+  pendingSubmissionStatus.textContent = 'Loading submissions…';
+
+  try {
+    const data = await apiRequest('/api/admin/mandir-submissions');
+    const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+
+    if (submissions.length === 0) {
+      pendingSubmissionStatus.textContent = 'No pending submissions.';
+      return;
+    }
+
+    for (const item of submissions) {
+      pendingSubmissionList.appendChild(createSubmissionAdminCard(item));
+    }
+
+    pendingSubmissionStatus.textContent =
+      'Pending submissions: ' + submissions.length;
+  } catch (error) {
+    pendingSubmissionStatus.textContent = error.message;
+  }
+}
+
+refreshSubmissionsButton.addEventListener('click', loadSubmissions);
 
 async function loadMandirs() {
   mandirList.replaceChildren();
