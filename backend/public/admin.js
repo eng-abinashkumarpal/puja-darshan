@@ -119,6 +119,50 @@ logoutButton.addEventListener('click', async () => {
 });
 
 
+function readSelectedVideoDuration(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    let finished = false;
+
+    const finish = (error, duration) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      video.onloadedmetadata = null;
+      video.onerror = null;
+
+      try {
+        video.removeAttribute('src');
+        video.load();
+      } catch (_) {}
+
+      URL.revokeObjectURL(url);
+      if (error) reject(error);
+      else resolve(duration);
+    };
+
+    const timer = setTimeout(() => {
+      finish(new Error('Could not read video duration. Try another video file.'));
+    }, 15000);
+
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        finish(null, duration);
+      } else {
+        finish(new Error('Could not verify the video duration.'));
+      }
+    };
+    video.onerror = () => {
+      finish(new Error('Could not read this video. Try MP4, MOV or WebM.'));
+    };
+    video.src = url;
+    video.load();
+  });
+}
+
 uploadForm.addEventListener('submit', async event => {
   event.preventDefault();
 
@@ -153,6 +197,36 @@ uploadForm.addEventListener('submit', async event => {
     return;
   }
 
+  if (alsoUpload) {
+    let duration;
+
+    try {
+      duration = await readSelectedVideoDuration(files[0]);
+    } catch (error) {
+      uploadStatus.textContent = error.message;
+      return;
+    }
+
+    const label =
+      Math.floor(duration / 60) + ':' +
+      String(Math.floor(duration % 60)).padStart(2, '0');
+
+    if (duration < 300) {
+      uploadStatus.textContent =
+        'YouTube upload requires a video at least 5 minutes long. Selected: ' +
+        label + '.';
+      return;
+    }
+
+    if (duration < 480 && !window.confirm(
+      'This video is ' + label + ' long. Eligible monetized videos need to be ' +
+      'at least 8 minutes long for mid-roll ads. Continue?'
+    )) {
+      uploadStatus.textContent = 'Upload cancelled.';
+      return;
+    }
+  }
+
   if (alsoUpload && youtubeTitle.value.trim().length > 100) {
     uploadStatus.textContent = 'YouTube title must be 100 characters or fewer.';
     return;
@@ -166,8 +240,8 @@ uploadForm.addEventListener('submit', async event => {
 
   uploadButton.disabled = true;
   uploadStatus.textContent = alsoUpload
-    ? 'Uploading to Cloudinary and YouTube… Please wait.'
-    : 'Uploading ' + files.length + ' file(s)… Please wait.';
+    ? 'Uploading directly to YouTube only… Please wait.'
+    : 'Uploading ' + files.length + ' file(s) to Cloudinary… Please wait.';
 
   const body = new FormData();
   for (const file of files) body.append('files', file);
@@ -191,16 +265,16 @@ uploadForm.addEventListener('submit', async event => {
         'Upload successful! ' + result.count + ' file(s) uploaded to Cloudinary.';
     } else if (result.youtube && result.youtube.success === true) {
       uploadStatus.textContent =
-        'Success! Video saved to Cloudinary and YouTube: ' +
+        'YouTube upload successful! No video copy was saved to Cloudinary. ' +
         result.youtube.url +
         ' (Privacy: ' + result.youtube.privacyStatus + ').';
     } else if (result.youtube && result.youtube.success === false) {
       uploadStatus.textContent =
-        'Cloudinary upload succeeded, but YouTube upload failed. ' +
+        'YouTube upload failed. No Cloudinary copy was saved. ' +
         (result.youtube.error || 'Please check the YouTube connection.');
     } else {
       uploadStatus.textContent =
-        'Cloudinary upload succeeded, but no YouTube result was returned.';
+        'No YouTube upload result was returned. Check the backend logs.';
     }
 
     uploadForm.reset();

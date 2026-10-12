@@ -857,7 +857,7 @@ app.post(
                 };
             }
 
-            const media = await Promise.all(
+            const media = youtubeContext ? [] : await Promise.all(
                 req.files.map(async (file) => {
                     const result = await new Promise((resolve, reject) => {
                         const stream = cloudinary.uploader.upload_stream(
@@ -943,7 +943,7 @@ app.post(
 
                     youtubeResult = {
                         success: false,
-                        error: 'Cloudinary upload succeeded, but YouTube upload failed. Check the YouTube API quota, authorization, and video format.'
+                        error: 'YouTube upload failed. No video was saved to Cloudinary. Check the YouTube API quota, authorization, and video format.'
                     };
                 }
             }
