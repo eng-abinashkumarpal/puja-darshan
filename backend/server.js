@@ -746,6 +746,117 @@ app.post(
                 });
             }
 
+            const alsoUploadToYoutube =
+                req.body && req.body.alsoUploadToYoutube === 'true';
+
+            let youtubeContext = null;
+
+            if (alsoUploadToYoutube) {
+                if (req.files.length !== 1) {
+                    return res.status(400).json({
+                        error: 'Select exactly one video for YouTube upload.'
+                    });
+                }
+
+                const file = req.files[0];
+                const allowedVideoMimes = new Set([
+                    'video/mp4',
+                    'video/quicktime',
+                    'video/webm'
+                ]);
+
+                if (!allowedVideoMimes.has(file.mimetype)) {
+                    return res.status(400).json({
+                        error: 'YouTube upload supports MP4, MOV and WebM videos only.'
+                    });
+                }
+
+                let title = typeof req.body.youtubeTitle === 'string'
+                    ? req.body.youtubeTitle.trim()
+                    : '';
+
+                if (!title) {
+                    title = path.basename(
+                        file.originalname || 'Puja Darshan Video',
+                        path.extname(file.originalname || '')
+                    ).trim().slice(0, 100);
+                }
+
+                if (!title) title = 'Puja Darshan Video';
+
+                if (title.length > 100) {
+                    return res.status(400).json({
+                        error: 'YouTube title must be 100 characters or fewer.'
+                    });
+                }
+
+                const description =
+                    typeof req.body.youtubeDescription === 'string'
+                        ? req.body.youtubeDescription
+                        : '';
+
+                if (description.length > 5000) {
+                    return res.status(400).json({
+                        error: 'YouTube description must be 5000 characters or fewer.'
+                    });
+                }
+
+                const requestedPrivacy =
+                    typeof req.body.youtubePrivacy === 'string'
+                        ? req.body.youtubePrivacy
+                        : 'private';
+
+                if (!['private', 'unlisted', 'public'].includes(requestedPrivacy)) {
+                    return res.status(400).json({
+                        error: 'Invalid YouTube privacy setting.'
+                    });
+                }
+
+                if (!redisClient) {
+                    return res.status(503).json({
+                        error: 'YouTube upload must run on the deployed backend.'
+                    });
+                }
+
+                const oauth = createYouTubeOAuthClient();
+                if (!oauth) {
+                    return res.status(503).json({
+                        error: 'YouTube OAuth environment variables are not configured.'
+                    });
+                }
+
+                const savedRaw = await redisClient.get(
+                    YOUTUBE_CREDENTIALS_REDIS_KEY
+                );
+
+                let savedCredentials = null;
+                try {
+                    savedCredentials = savedRaw ? JSON.parse(savedRaw) : null;
+                } catch {
+                    savedCredentials = null;
+                }
+
+                if (!savedCredentials ||
+                    typeof savedCredentials.refreshToken !== 'string' ||
+                    !savedCredentials.refreshToken) {
+                    return res.status(409).json({
+                        error: 'YouTube is not connected. Connect the YouTube account first.'
+                    });
+                }
+
+                oauth.setCredentials({
+                    refresh_token: savedCredentials.refreshToken
+                });
+
+                youtubeContext = {
+                    oauth,
+                    file,
+                    title,
+                    description,
+                    privacyStatus: requestedPrivacy
+                };
+            }
+
             const media = await Promise.all(
                 req.files.map(async (file) => {
                     const result = await new Promise((resolve, reject) => {
@@ -775,16 +886,81 @@ app.post(
                 })
             );
 
-            res.status(201).json({
+            let youtubeResult = null;
+
+            if (youtubeContext) {
+                try {
+                    const youtube = google.youtube({
+                        version: 'v3',
+                        auth: youtubeContext.oauth
+                    });
+
+                    const response = await youtube.videos.insert({
+                        part: ['snippet', 'status'],
+                        requestBody: {
+                            snippet: {
+                                title: youtubeContext.title,
+                                description: youtubeContext.description,
+                                categoryId: '19'
+                            },
+                            status: {
+                                privacyStatus: youtubeContext.privacyStatus
+                            }
+                        },
+                        media: {
+                            body: require('stream').Readable.from([
+                                youtubeContext.file.buffer
+                            ])
+                        }
+                    });
+
+                    const videoId = response.data.id;
+
+                    if (!videoId) {
+                        throw new Error('YouTube did not return a video ID.');
+                    }
+
+                    youtubeResult = {
+                        success: true,
+                        videoId,
+                        url: 'https://www.youtube.com/watch?v=' + videoId,
+                        privacyStatus: youtubeContext.privacyStatus
+                    };
+                } catch (youtubeError) {
+                    const googleMessage =
+                        youtubeError &&
+                        youtubeError.response &&
+                        youtubeError.response.data &&
+                        youtubeError.response.data.error &&
+                        youtubeError.response.data.error.message;
+
+                    console.error(
+                        'YouTube upload failed:',
+                        typeof googleMessage === 'string'
+                            ? googleMessage
+                            : 'API request failed.'
+                    );
+
+                    youtubeResult = {
+                        success: false,
+                        error: 'Cloudinary upload succeeded, but YouTube upload failed. Check the YouTube API quota, authorization, and video format.'
+                    };
+                }
+            }
+
+            return res.status(201).json({
                 success: true,
                 count: media.length,
-                media
+                media,
+                youtube: youtubeResult
             });
         } catch (error) {
             next(error);
         }
     }
 );
+
+
 
 // List gallery items tagged by this application.
 app.get('/api/admin/media', requireAdmin, async (req, res, next) => {

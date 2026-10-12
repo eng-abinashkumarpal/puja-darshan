@@ -71,12 +71,42 @@
         <form id="upload-form">
           <label for="media-file">Choose a photo or video</label>
           <input
-  type="file"
-  id="media-file"
-  accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
-  multiple
-  required
->
+            type="file"
+            id="media-file"
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+            multiple
+            required
+          >
+
+          <label class="youtube-upload-toggle" for="upload-to-youtube">
+            <input id="upload-to-youtube" type="checkbox">
+            Also upload this video to YouTube
+          </label>
+
+          <fieldset id="youtube-upload-options" class="youtube-upload-options" hidden>
+            <legend>YouTube video details</legend>
+
+            <label for="youtube-title">Video title (optional)</label>
+            <input id="youtube-title" maxlength="100"
+                   placeholder="Uses the selected filename if blank">
+
+            <label for="youtube-description">Description (optional)</label>
+            <textarea id="youtube-description" rows="4" maxlength="5000"
+                      placeholder="Describe the Puja Darshan video"></textarea>
+
+            <label for="youtube-privacy">YouTube privacy</label>
+            <select id="youtube-privacy">
+              <option value="private" selected>Private — only you can view it</option>
+              <option value="unlisted">Unlisted — viewers need the link</option>
+              <option value="public">Public — anyone can view it</option>
+            </select>
+
+            <p class="help">
+              Select exactly one video when this option is enabled.
+              Private is the default.
+            </p>
+          </fieldset>
+
           <button id="upload-button" type="submit">Upload Media</button>
         </form>
         <p id="upload-status" role="status" aria-live="polite"></p>

@@ -8,6 +8,21 @@ const mediaFile = document.getElementById('media-file');
 const uploadButton = document.getElementById('upload-button');
 const uploadStatus = document.getElementById('upload-status');
 
+const uploadToYoutube = document.getElementById('upload-to-youtube');
+const youtubeOptions = document.getElementById('youtube-upload-options');
+const youtubeTitle = document.getElementById('youtube-title');
+const youtubeDescription = document.getElementById('youtube-description');
+const youtubePrivacy = document.getElementById('youtube-privacy');
+
+uploadToYoutube.addEventListener('change', () => {
+  youtubeOptions.hidden = !uploadToYoutube.checked;
+});
+
+uploadForm.addEventListener('reset', () => {
+  youtubeOptions.hidden = true;
+});
+
+
 const gallery = document.getElementById('media-gallery');
 const galleryStatus = document.getElementById('gallery-status');
 const refreshButton = document.getElementById('refresh-button');
@@ -108,6 +123,7 @@ uploadForm.addEventListener('submit', async event => {
   event.preventDefault();
 
   const files = Array.from(mediaFile.files);
+  const alsoUpload = uploadToYoutube.checked;
 
   if (files.length === 0) {
     uploadStatus.textContent = 'Please select at least one file.';
@@ -120,35 +136,78 @@ uploadForm.addEventListener('submit', async event => {
   }
 
   const oversizedFile = files.find(file => file.size > 50 * 1024 * 1024);
-
   if (oversizedFile) {
+    uploadStatus.textContent = oversizedFile.name + ' exceeds the 50 MB limit.';
+    return;
+  }
+
+  if (alsoUpload && files.length !== 1) {
     uploadStatus.textContent =
-      `${oversizedFile.name} exceeds the 50 MB limit.`;
+      'For YouTube, select exactly one video at a time.';
+    return;
+  }
+
+  if (alsoUpload && !/^video\/(mp4|quicktime|webm)$/i.test(files[0].type)) {
+    uploadStatus.textContent =
+      'YouTube upload supports MP4, MOV and WebM videos only.';
+    return;
+  }
+
+  if (alsoUpload && youtubeTitle.value.trim().length > 100) {
+    uploadStatus.textContent = 'YouTube title must be 100 characters or fewer.';
+    return;
+  }
+
+  if (alsoUpload && youtubeDescription.value.length > 5000) {
+    uploadStatus.textContent =
+      'YouTube description must be 5000 characters or fewer.';
     return;
   }
 
   uploadButton.disabled = true;
-  uploadStatus.textContent = `Uploading ${files.length} file(s)… Please wait.`;
+  uploadStatus.textContent = alsoUpload
+    ? 'Uploading to Cloudinary and YouTube… Please wait.'
+    : 'Uploading ' + files.length + ' file(s)… Please wait.';
 
   const body = new FormData();
+  for (const file of files) body.append('files', file);
 
-  for (const file of files) {
-    body.append('files', file);
+  body.append('alsoUploadToYoutube', alsoUpload ? 'true' : 'false');
+
+  if (alsoUpload) {
+    body.append('youtubeTitle', youtubeTitle.value.trim());
+    body.append('youtubeDescription', youtubeDescription.value);
+    body.append('youtubePrivacy', youtubePrivacy.value);
   }
 
   try {
-    const data = await apiRequest('/api/admin/media', {
+    const result = await apiRequest('/api/admin/media', {
       method: 'POST',
       body
     });
 
-    uploadStatus.textContent =
-      `Upload successful! ${data.count} file(s) uploaded.`;
+    if (!alsoUpload) {
+      uploadStatus.textContent =
+        'Upload successful! ' + result.count + ' file(s) uploaded to Cloudinary.';
+    } else if (result.youtube && result.youtube.success === true) {
+      uploadStatus.textContent =
+        'Success! Video saved to Cloudinary and YouTube: ' +
+        result.youtube.url +
+        ' (Privacy: ' + result.youtube.privacyStatus + ').';
+    } else if (result.youtube && result.youtube.success === false) {
+      uploadStatus.textContent =
+        'Cloudinary upload succeeded, but YouTube upload failed. ' +
+        (result.youtube.error || 'Please check the YouTube connection.');
+    } else {
+      uploadStatus.textContent =
+        'Cloudinary upload succeeded, but no YouTube result was returned.';
+    }
 
     uploadForm.reset();
+    youtubeOptions.hidden = true;
     await loadGallery();
   } catch (error) {
-    uploadStatus.textContent = `Upload failed: ${error.message}`;
+    uploadStatus.textContent = 'Upload failed: ' + error.message;
   } finally {
     uploadButton.disabled = false;
   }

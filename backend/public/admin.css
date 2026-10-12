@@ -126,3 +126,38 @@ button:focus-visible, input:focus-visible {
         height: 140px;
     }
 }
+
+
+/* Puja Darshan YouTube upload option */
+.youtube-upload-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 1rem 0;
+  cursor: pointer;
+}
+#upload-to-youtube {
+  width: auto;
+  margin: 0;
+  flex: 0 0 auto;
+}
+.youtube-upload-options {
+  margin: 0.75rem 0 1rem;
+  padding: 1rem;
+  border: 1px solid #dce3eb;
+  border-radius: 10px;
+  min-width: 0;
+}
+.youtube-upload-options[hidden] {
+  display: none !important;
+}
+.youtube-upload-options label {
+  display: block;
+  margin-top: 0.75rem;
+}
+.youtube-upload-options textarea,
+.youtube-upload-options select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
