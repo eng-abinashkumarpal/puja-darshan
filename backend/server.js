@@ -9,6 +9,7 @@ const { createClient } = require('redis');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
+const { google } = require('googleapis');
 const multer = require('multer');
 
 const fs = require('fs');
@@ -257,6 +258,211 @@ async function requireAdmin(req, res, next) {
         return next(error);
     }
 }
+
+
+
+// YouTube OAuth credentials and temporary state are stored server-side.
+const YOUTUBE_CREDENTIALS_REDIS_KEY =
+    'puja-darshan:youtube:credentials';
+
+const YOUTUBE_OAUTH_STATE_PREFIX =
+    'puja-darshan:youtube:oauth-state:';
+
+function createYouTubeOAuthClient() {
+    const { YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REDIRECT_URI } =
+        process.env;
+
+    if (!YOUTUBE_CLIENT_ID ||
+        !YOUTUBE_CLIENT_SECRET ||
+        !YOUTUBE_REDIRECT_URI) {
+        return null;
+    }
+
+    return new google.auth.OAuth2(
+        YOUTUBE_CLIENT_ID,
+        YOUTUBE_CLIENT_SECRET,
+        YOUTUBE_REDIRECT_URI
+    );
+}
+
+app.get('/api/admin/youtube/status', requireAdmin, async (req, res, next) => {
+    try {
+        let connected = false;
+
+        if (redisClient) {
+            const raw = await redisClient.get(
+                YOUTUBE_CREDENTIALS_REDIS_KEY
+            );
+
+            if (raw) {
+                try {
+                    const saved = JSON.parse(raw);
+                    connected = typeof saved.refreshToken === 'string' &&
+                        saved.refreshToken.length > 0;
+                } catch {
+                    connected = false;
+                }
+            }
+        }
+
+        res.set('Cache-Control', 'no-store');
+        return res.json({
+            success: true,
+            configured: Boolean(createYouTubeOAuthClient()),
+            connected
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/admin/youtube/connect', requireAdmin, async (req, res, next) => {
+    try {
+        // OAuth is enabled only where persistent Redis storage is available.
+        if (!redisClient) {
+            return res.status(503).json({
+                error: 'YouTube connection must be initiated on the deployed backend.'
+            });
+        }
+
+        const oauth = createYouTubeOAuthClient();
+
+        if (!oauth) {
+            return res.status(503).json({
+                error: 'YouTube OAuth environment variables are not configured.'
+            });
+        }
+
+        const state = require('crypto').randomBytes(32).toString('hex');
+        const stateKey = YOUTUBE_OAUTH_STATE_PREFIX + state;
+
+        const stored = await redisClient.set(
+            stateKey,
+            JSON.stringify({
+                adminUsername: req.session.adminUsername || '',
+                createdAt: Date.now()
+            }),
+            { EX: 600, NX: true }
+        );
+
+        if (stored !== 'OK') {
+            return res.status(503).json({
+                error: 'Could not start YouTube authorization. Please retry.'
+            });
+        }
+
+        const url = oauth.generateAuthUrl({
+            access_type: 'offline',
+            prompt: 'consent',
+            include_granted_scopes: true,
+            scope: ['https://www.googleapis.com/auth/youtube.upload'],
+            state
+        });
+
+        return res.redirect(302, url);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Google redirects here after the user grants or denies permission.
+// The one-time Redis state is checked because cross-site callbacks cannot
+// depend on the Admin session cookie.
+app.get('/api/youtube/oauth2callback', async (req, res, next) => {
+    try {
+        if (!redisClient) {
+            return res.status(503).send(
+                'YouTube authorization requires persistent backend storage.'
+            );
+        }
+
+        const state = typeof req.query.state === 'string'
+            ? req.query.state
+            : '';
+
+        if (!/^[a-f0-9]{64}$/.test(state)) {
+            return res.status(400).send(
+                'Invalid or expired YouTube authorization state.'
+            );
+        }
+
+        const stateKey = YOUTUBE_OAUTH_STATE_PREFIX + state;
+        const rawState = await redisClient.get(stateKey);
+
+        if (!rawState) {
+            return res.status(400).send(
+                'Invalid or expired YouTube authorization state. Start again from Admin.'
+            );
+        }
+
+        // Consume the state immediately so it cannot be reused.
+        await redisClient.del(stateKey);
+
+        if (typeof req.query.error === 'string') {
+            return res.redirect(303, '/admin?youtube=cancelled');
+        }
+
+        const code = typeof req.query.code === 'string'
+            ? req.query.code
+            : '';
+
+        if (!code) {
+            return res.status(400).send(
+                'Google did not return an authorization code.'
+            );
+        }
+
+        const oauth = createYouTubeOAuthClient();
+
+        if (!oauth) {
+            return res.status(503).send(
+                'YouTube OAuth environment variables are not configured.'
+            );
+        }
+
+        const tokenResult = await oauth.getToken(code);
+        const tokens = tokenResult.tokens || {};
+
+        const existingRaw = await redisClient.get(
+            YOUTUBE_CREDENTIALS_REDIS_KEY
+        );
+
+        let existing = null;
+        if (existingRaw) {
+            try {
+                existing = JSON.parse(existingRaw);
+            } catch {
+                existing = null;
+            }
+        }
+
+        const refreshToken =
+            tokens.refresh_token ||
+            (existing && existing.refreshToken);
+
+        if (!refreshToken) {
+            return res.redirect(303, '/admin?youtube=token-error');
+        }
+
+        // Never return or log tokens to the browser.
+        const stateInfo = JSON.parse(rawState);
+
+        await redisClient.set(
+            YOUTUBE_CREDENTIALS_REDIS_KEY,
+            JSON.stringify({
+                refreshToken,
+                connectedAt: new Date().toISOString(),
+                connectedBy: stateInfo.adminUsername || ''
+            })
+        );
+
+        return res.redirect(303, '/admin?youtube=connected');
+    } catch (error) {
+        console.error('YouTube OAuth callback failed.');
+        return res.redirect(303, '/admin?youtube=error');
+    }
+});
+
 
 const allowedMimes = new Set([
     'image/jpeg',
