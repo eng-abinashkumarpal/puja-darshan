@@ -1096,6 +1096,7 @@
         return card;
     }
 
+
     function updateDistricts() {
         const selectedZone = zoneFilter.value;
         const selectedDistrict = districtFilter.value;
@@ -1119,36 +1120,66 @@
             ? allMandirs.filter(item => text(item.zone) === activeZone)
             : allMandirs;
 
-        const districts = [...new Set(
-            sourceMandirs.map(item => text(item.district)).filter(Boolean)
-        )].sort((a, b) => a.localeCompare(b));
+        // Count mandirs within the currently selected division/zone.
+        const districtCounts = new Map();
+
+        sourceMandirs.forEach(item => {
+            const district = text(item.district);
+            if (district) {
+                districtCounts.set(
+                    district,
+                    (districtCounts.get(district) || 0) + 1
+                );
+            }
+        });
+
+        const districts = [...districtCounts.keys()]
+            .sort((a, b) => a.localeCompare(b));
 
         districtFilter.replaceChildren(
             new Option('All Districts', '')
         );
 
+        // Keep the actual district as the option value.
         districts.forEach(district => {
-            districtFilter.add(new Option(district, district));
+            const count = districtCounts.get(district);
+            districtFilter.add(
+                new Option(district + ' (' + count + ')', district)
+            );
         });
 
         districtFilter.value =
             districts.includes(selectedDistrict) ? selectedDistrict : '';
     }
 
+    function normalizeSearchText(value) {
+        return String(value || '')
+            .normalize('NFKC')
+            .toLocaleLowerCase()
+            .replace(/\\s+/g, ' ')
+            .trim();
+    }
+
     function filterMandirs() {
-        const query = searchInput.value.toLowerCase().trim();
+        // Each search word can match independently, in any order.
+        const queryTerms = normalizeSearchText(searchInput.value)
+            .split(' ')
+            .filter(Boolean);
+
         const zone = zoneFilter.value;
         const district = districtFilter.value;
         let visible = 0;
 
         grid.querySelectorAll('.mandir-card').forEach(card => {
-            const searchable = (
-                card.dataset.name + ' ' +
-                card.dataset.location + ' ' +
+            const searchable = normalizeSearchText([
+                card.dataset.name,
+                card.dataset.location,
+                card.dataset.zone,
+                card.dataset.district,
                 card.textContent
-            ).toLowerCase();
+            ].join(' '));
 
-            const matches = (!query || searchable.includes(query)) &&
+            const matches = queryTerms.every(term => searchable.includes(term)) &&
                 (!zone || card.dataset.zone === zone) &&
                 (!district || card.dataset.district === district);
 
