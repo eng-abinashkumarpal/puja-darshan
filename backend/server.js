@@ -508,7 +508,7 @@ const mediaUpload = multer({
         }
     }),
     limits: {
-        fileSize: 200 * 1024 * 1024,
+        fileSize: 500 * 1024 * 1024,
         files: 10
     },
     fileFilter: (req, file, cb) => {
@@ -526,7 +526,7 @@ function handleAdminMediaUpload(req, res, next) {
         if (error instanceof multer.MulterError &&
             error.code === 'LIMIT_FILE_SIZE') {
             return res.status(413).json({
-                error: 'Upload exceeds 200 MB. YouTube video uploads may be up to 200 MB; Cloudinary-only uploads remain limited to 50 MB.'
+                error: 'Upload exceeds 500 MB. YouTube video uploads may be up to 500 MB; Cloudinary-only uploads remain limited to 50 MB.'
             });
         }
 
@@ -803,7 +803,7 @@ app.post(
             if (!alsoUploadToYoutube &&
                 req.files.some(file => file.size > 50 * 1024 * 1024)) {
                 return res.status(413).json({
-                    error: 'Cloudinary-only uploads are limited to 50 MB per file. Enable YouTube upload for videos up to 200 MB.'
+                    error: 'Cloudinary-only uploads are limited to 50 MB per file. Enable YouTube upload for videos up to 500 MB.'
                 });
             }
 
