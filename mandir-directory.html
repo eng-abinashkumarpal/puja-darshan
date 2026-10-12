@@ -539,6 +539,29 @@
             overflow-wrap: anywhere;
             line-height: 1.6;
         }
+
+        /* Dynamic Division/Zone and District filters */
+        .directory-filters {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+            width: 100%;
+        }
+
+        .directory-filters input,
+        .directory-filters select {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 760px) {
+            .directory-filters {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
 </style>
 </head>
 
@@ -683,14 +706,13 @@
                     placeholder="Search mandir name or location..."
                     aria-label="Search mandirs">
 
-                <select id="district-filter" aria-label="Filter by district">
-                    <option value="">All Districts</option>
-                    <option value="Dhaka">Dhaka</option>
-                    <option value="Faridpur">Faridpur</option>
-                    <option value="Chattogram">Chattogram</option>
-                    <option value="Khulna">Khulna</option>
-                    <option value="Rajshahi">Rajshahi</option>
-                </select>
+                            <select id="zone-filter" aria-label="Filter by division or zone">
+                <option value="">All Divisions / Zones</option>
+            </select>
+
+            <select id="district-filter" aria-label="Filter by district">
+                <option value="">All Districts</option>
+            </select>
             </div>
 
             <p class="directory-status" id="directory-status" aria-live="polite">
@@ -727,6 +749,7 @@
 
     const searchInput = document.getElementById('mandir-search');
     const districtFilter = document.getElementById('district-filter');
+    const zoneFilter = document.getElementById('zone-filter');
     const grid = document.getElementById('mandir-grid');
     const statusMessage = document.getElementById('directory-status');
     const emptyMessage = document.getElementById('directory-empty');
@@ -966,6 +989,7 @@
         card.className = 'mandir-card';
         card.dataset.name = name;
         card.dataset.district = district;
+        card.dataset.zone = zone;
         card.dataset.location = [district, address].filter(Boolean).join(' ');
 
 
@@ -1049,6 +1073,16 @@
                 ? 'View temple location on Google Maps'
                 : 'Find this mandir on Google Maps';
             content.appendChild(mapLink);
+
+            const directionsLink = document.createElement('a');
+            directionsLink.className = 'mandir-map-link';
+            directionsLink.href =
+                'https://www.google.com/maps/dir/?api=1&destination=' +
+                encodeURIComponent(mapSearch);
+            directionsLink.target = '_blank';
+            directionsLink.rel = 'noopener noreferrer';
+            directionsLink.textContent = 'Get directions';
+            content.appendChild(directionsLink);
         }
 
         if (description) {
@@ -1063,24 +1097,47 @@
     }
 
     function updateDistricts() {
-        const selected = districtFilter.value;
-        const districts = [...new Set(
-            allMandirs.map(item => text(item.district)).filter(Boolean)
+        const selectedZone = zoneFilter.value;
+        const selectedDistrict = districtFilter.value;
+
+        const zones = [...new Set(
+            allMandirs.map(item => text(item.zone)).filter(Boolean)
         )].sort((a, b) => a.localeCompare(b));
 
-        districtFilter.replaceChildren(new Option('All Districts', ''));
+        zoneFilter.replaceChildren(
+            new Option('All Divisions / Zones', '')
+        );
+
+        zones.forEach(zone => {
+            zoneFilter.add(new Option(zone, zone));
+        });
+
+        zoneFilter.value = zones.includes(selectedZone) ? selectedZone : '';
+
+        const activeZone = zoneFilter.value;
+        const sourceMandirs = activeZone
+            ? allMandirs.filter(item => text(item.zone) === activeZone)
+            : allMandirs;
+
+        const districts = [...new Set(
+            sourceMandirs.map(item => text(item.district)).filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b));
+
+        districtFilter.replaceChildren(
+            new Option('All Districts', '')
+        );
 
         districts.forEach(district => {
             districtFilter.add(new Option(district, district));
         });
 
-        if (districts.includes(selected)) {
-            districtFilter.value = selected;
-        }
+        districtFilter.value =
+            districts.includes(selectedDistrict) ? selectedDistrict : '';
     }
 
     function filterMandirs() {
         const query = searchInput.value.toLowerCase().trim();
+        const zone = zoneFilter.value;
         const district = districtFilter.value;
         let visible = 0;
 
@@ -1092,6 +1149,7 @@
             ).toLowerCase();
 
             const matches = (!query || searchable.includes(query)) &&
+                (!zone || card.dataset.zone === zone) &&
                 (!district || card.dataset.district === district);
 
             card.hidden = !matches;
@@ -1151,6 +1209,10 @@
     }
 
     searchInput.addEventListener('input', filterMandirs);
+    zoneFilter.addEventListener('change', () => {
+        updateDistricts();
+        filterMandirs();
+    });
     districtFilter.addEventListener('change', filterMandirs);
     loadMandirs();
 })();
