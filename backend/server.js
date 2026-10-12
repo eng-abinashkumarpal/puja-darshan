@@ -496,6 +496,30 @@ const MEDIA_UPLOAD_TEMP_DIR = require('path').join(
 );
 fs.mkdirSync(MEDIA_UPLOAD_TEMP_DIR, { recursive: true });
 
+function getAllowedMediaMimeType(file) {
+    const mime = String(file.mimetype || '').toLowerCase();
+
+    if (allowedMimes.has(mime)) return mime;
+
+    if (!mime || mime === 'application/octet-stream') {
+        const extension = path.extname(file.originalname || '').toLowerCase();
+        const extensionMimes = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.mp4': 'video/mp4',
+            '.mov': 'video/quicktime',
+            '.webm': 'video/webm'
+        };
+
+        const fallback = extensionMimes[extension];
+        if (fallback && allowedMimes.has(fallback)) return fallback;
+    }
+
+    return null;
+}
+
 const mediaUpload = multer({
     storage: multer.diskStorage({
         destination: (_req, _file, cb) => cb(null, MEDIA_UPLOAD_TEMP_DIR),
@@ -512,9 +536,13 @@ const mediaUpload = multer({
         files: 10
     },
     fileFilter: (req, file, cb) => {
-        if (!allowedMimes.has(file.mimetype)) {
+        const detectedMimeType = getAllowedMediaMimeType(file);
+
+        if (!detectedMimeType) {
             return cb(new Error('Unsupported file type.'));
         }
+
+        file.detectedMimeType = detectedMimeType;
         cb(null, true);
     }
 });
@@ -823,7 +851,9 @@ app.post(
                     'video/webm'
                 ]);
 
-                if (!allowedVideoMimes.has(file.mimetype)) {
+                const videoMimeType = file.detectedMimeType || file.mimetype;
+
+                if (!allowedVideoMimes.has(videoMimeType)) {
                     return res.status(400).json({
                         error: 'YouTube upload supports MP4, MOV and WebM videos only.'
                     });
@@ -909,6 +939,7 @@ app.post(
                 youtubeContext = {
                     oauth,
                     file,
+                    mimeType: videoMimeType,
                     title,
                     description,
                     privacyStatus: requestedPrivacy
@@ -971,7 +1002,7 @@ app.post(
                             }
                         },
                         media: {
-                            mimeType: youtubeContext.file.mimetype,
+                            mimeType: youtubeContext.mimeType,
                             body: fs.createReadStream(youtubeContext.file.path)
                         }
                     });
@@ -1590,7 +1621,7 @@ app.use((err, req, res, next) => {
 
         return res.status(status).json({
             error: err.code === 'LIMIT_FILE_SIZE'
-                ? 'File size must not exceed 50 MB.'
+                ? 'File exceeds the 500 MB server limit. Cloudinary-only uploads remain limited to 50 MB.'
                 : 'Upload rejected. Please check the selected file.'
         });
     }

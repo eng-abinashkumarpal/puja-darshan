@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Puja Darshan — Secure Admin</title>
-  <link rel="stylesheet" href="/admin.css">
-  <script src="/admin.js?v=upload500" defer></script>
+  <link rel="stylesheet" href="/admin.css?v=mobilefix20261013">
+  <script src="/admin.js?v=mobilefix20261013" defer></script>
 </head>
 <body>
   <main class="panel">
@@ -65,7 +65,7 @@
 <section class="tool-section">
         <h3>Upload Photos & Videos</h3>
         <p class="help">
-          JPG, PNG, WebP, MP4, MOV or WebM. Maximum 50 MB per file.
+          Photos and Cloudinary-only uploads: maximum 50 MB. YouTube uploads: one video up to 500 MB.
         </p>
 
         <form id="upload-form">
@@ -102,8 +102,9 @@
             </select>
 
             <p class="help">
-              Select exactly one video when this option is enabled.
-              Private is the default.
+              Select one MP4, MOV or WebM video, up to 500 MB.
+              The video must be at least 5 minutes long.
+              Private is the default; check visibility before publishing.
             </p>
           </fieldset>
 

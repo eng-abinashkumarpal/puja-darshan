@@ -35,6 +35,7 @@ const passwordChangeStatus = document.getElementById('password-change-status');
 function showSignedIn(username) {
   form.hidden = true;
   adminArea.hidden = false;
+  document.body.classList.add('admin-signed-in');
   document.getElementById('signed-in-as').textContent =
     `Signed in as ${username}.`;
   message.textContent = '';
@@ -53,6 +54,7 @@ async function apiRequest(url, options = {}) {
 
   if (response.status === 401 && url !== '/api/auth/login') {
     adminArea.hidden = true;
+    document.body.classList.remove('admin-signed-in');
     form.hidden = false;
     message.textContent = 'Your session expired. Please sign in again.';
     throw new Error('Authentication required.');
@@ -107,6 +109,7 @@ logoutButton.addEventListener('click', async () => {
   try {
     await apiRequest('/api/auth/logout', { method: 'POST' });
     adminArea.hidden = true;
+    document.body.classList.remove('admin-signed-in');
     form.hidden = false;
     form.reset();
     gallery.replaceChildren();
@@ -144,7 +147,7 @@ function readSelectedVideoDuration(file) {
 
     const timer = setTimeout(() => {
       finish(new Error('Could not read video duration. Try another video file.'));
-    }, 15000);
+    }, 30000);
 
     video.preload = 'metadata';
     video.onloadedmetadata = () => {
@@ -160,6 +163,73 @@ function readSelectedVideoDuration(file) {
     };
     video.src = url;
     video.load();
+  });
+}
+
+function uploadMediaWithProgress(body, alsoUpload) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/api/admin/media', true);
+    xhr.withCredentials = true;
+    xhr.timeout = 30 * 60 * 1000;
+
+    xhr.upload.addEventListener('progress', event => {
+      if (!event.lengthComputable) {
+        uploadStatus.textContent =
+          'Uploading file from this device… Keep this page open.';
+        return;
+      }
+
+      const percent = Math.round((event.loaded / event.total) * 100);
+      const sent = (event.loaded / (1024 * 1024)).toFixed(1);
+      const total = (event.total / (1024 * 1024)).toFixed(1);
+
+      uploadStatus.textContent =
+        (alsoUpload ? 'Sending video for YouTube upload: '
+                    : 'Sending media to Cloudinary: ') +
+        percent + '% (' + sent + ' / ' + total +
+        ' MB). Keep this page open.';
+    });
+
+    xhr.upload.addEventListener('load', () => {
+      uploadStatus.textContent = alsoUpload
+        ? 'Video sent to server. YouTube upload is processing; keep this page open.'
+        : 'Files sent to server. Cloudinary is processing; keep this page open.';
+    });
+
+    xhr.addEventListener('load', () => {
+      let result = {};
+      try {
+        result = JSON.parse(xhr.responseText || '{}');
+      } catch (_) {}
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(result);
+      } else {
+        reject(new Error(
+          result.error || 'Upload failed (HTTP ' + xhr.status + ').'
+        ));
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      reject(new Error(
+        'Network error during upload. Check your connection and try again.'
+      ));
+    });
+
+    xhr.addEventListener('timeout', () => {
+      reject(new Error(
+        'Upload timed out. A resumable upload system is needed for reliable retries.'
+      ));
+    });
+
+    xhr.addEventListener('abort', () => {
+      reject(new Error('Upload was cancelled.'));
+    });
+
+    xhr.send(body);
   });
 }
 
@@ -198,39 +268,56 @@ uploadForm.addEventListener('submit', async event => {
     return;
   }
 
-  if (alsoUpload && !/^video\/(mp4|quicktime|webm)$/i.test(files[0].type)) {
-    uploadStatus.textContent =
-      'YouTube upload supports MP4, MOV and WebM videos only.';
-    return;
-  }
-
   if (alsoUpload) {
-    let duration;
+    const selected = files[0];
+    const mimeAllowed =
+      /^video\/(mp4|quicktime|webm)$/i.test(selected.type || '');
+    const extensionAllowed =
+      /\.(mp4|mov|webm)$/i.test(selected.name || '');
+
+    if (!mimeAllowed && !extensionAllowed) {
+      uploadStatus.textContent =
+        'Choose an MP4, MOV or WebM video for YouTube upload.';
+      return;
+    }
+
+    let duration = null;
 
     try {
-      duration = await readSelectedVideoDuration(files[0]);
+      duration = await readSelectedVideoDuration(selected);
     } catch (error) {
-      uploadStatus.textContent = error.message;
-      return;
+      const proceed = window.confirm(
+        'This device could not read the video duration. ' +
+        'Continue only if the video is at least 5 minutes long. ' +
+        'Videos under 8 minutes may not qualify for mid-roll ads. Continue?'
+      );
+
+      if (!proceed) {
+        uploadStatus.textContent = 'Upload cancelled.';
+        return;
+      }
     }
 
-    const label =
-      Math.floor(duration / 60) + ':' +
-      String(Math.floor(duration % 60)).padStart(2, '0');
+    if (duration !== null) {
+      const label =
+        Math.floor(duration / 60) + ':' +
+        String(Math.floor(duration % 60)).padStart(2, '0');
 
-    if (duration < 300) {
-      uploadStatus.textContent =
-        'YouTube upload requires a video at least 5 minutes long. Selected: ' +
-        label + '.';
-      return;
-    }
+      if (duration < 300) {
+        uploadStatus.textContent =
+          'YouTube upload requires at least 5 minutes. Selected: ' +
+          label + '.';
+        return;
+      }
 
-    if (duration < 480 && !window.confirm(
-      'This video is ' + label + ' long. Eligible monetized videos need to be ' +
-      'at least 8 minutes long for mid-roll ads. Continue?'
-    )) {
-      uploadStatus.textContent = 'Upload cancelled.';
-      return;
+      if (duration < 480 && !window.confirm(
+        'This video is ' + label + ' long. ' +
+        'Eligible monetized videos need at least 8 minutes for mid-roll ads. ' +
+        'Continue uploading?'
+      )) {
+        uploadStatus.textContent = 'Upload cancelled.';
+        return;
+      }
     }
   }
 
@@ -262,10 +349,7 @@ uploadForm.addEventListener('submit', async event => {
   }
 
   try {
-    const result = await apiRequest('/api/admin/media', {
-      method: 'POST',
-      body
-    });
+    const result = await uploadMediaWithProgress(body, alsoUpload);
 
     if (!alsoUpload) {
       uploadStatus.textContent =
@@ -724,6 +808,7 @@ passwordChangeForm.addEventListener('submit', async event => {
 
     passwordChangeForm.reset();
     adminArea.hidden = true;
+    document.body.classList.remove('admin-signed-in');
     form.hidden = false;
     form.reset();
     gallery.replaceChildren();

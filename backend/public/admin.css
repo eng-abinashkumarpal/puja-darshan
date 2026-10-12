@@ -161,3 +161,101 @@ button:focus-visible, input:focus-visible {
   width: 100%;
   max-width: 100%;
 }
+
+
+/* MOBILE ADMIN FIXES 2026-10-13 */
+body.admin-signed-in {
+  display: block;
+  min-height: 100vh;
+  padding: 12px;
+}
+body.admin-signed-in .panel {
+  width: 100%;
+  max-width: 1100px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: clamp(16px, 2.5vw, 30px);
+}
+body.admin-signed-in .panel .admin-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+body.admin-signed-in .panel .tool-section,
+body.admin-signed-in .panel fieldset {
+  min-width: 0;
+  max-width: 100%;
+}
+body.admin-signed-in .panel input:not([type="checkbox"]):not([type="file"]),
+body.admin-signed-in .panel select,
+body.admin-signed-in .panel textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
+}
+body.admin-signed-in .panel input[type="file"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px;
+  font-size: 16px;
+}
+body.admin-signed-in .panel .youtube-upload-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.45;
+}
+body.admin-signed-in .panel #upload-to-youtube {
+  flex: 0 0 20px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  padding: 0;
+}
+body.admin-signed-in .panel button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+body.admin-signed-in .panel #logout-button,
+body.admin-signed-in .panel #refresh-button {
+  width: auto;
+}
+body.admin-signed-in .panel #upload-status,
+body.admin-signed-in .panel #gallery-status,
+body.admin-signed-in .panel #message {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+body.admin-signed-in .panel #media-gallery {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+}
+@media (max-width: 600px) {
+  body.admin-signed-in {
+    padding: 8px;
+  }
+  body.admin-signed-in .panel {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  body.admin-signed-in .panel #media-gallery {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  body.admin-signed-in .panel #media-gallery .media-card > img,
+  body.admin-signed-in .panel #media-gallery .media-card > video {
+    height: 180px;
+  }
+  body.admin-signed-in .panel .mandir-form-actions,
+  body.admin-signed-in .panel .mandir-card-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
