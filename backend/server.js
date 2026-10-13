@@ -88,6 +88,40 @@ async function writeMandirSubmissions(submissions) {
 }
 
 
+const PHOTO_SUBMISSIONS_REDIS_KEY = 'puja-darshan:photo-submissions';
+const PHOTO_SUBMISSIONS_FILE = path.join(MANDIR_DATA_DIR, 'photo-submissions.json');
+const PHOTO_SUBMISSION_FOLDER = 'puja-darshan/photo-submissions';
+const PHOTO_SUBMISSION_TAG = 'puja-darshan-pending-photo-submission';
+const PHOTO_SUBMISSION_TYPE = 'authenticated';
+
+async function readPhotoSubmissions() {
+    if (redisClient) {
+        const saved = await redisClient.get(PHOTO_SUBMISSIONS_REDIS_KEY);
+        if (!saved) return [];
+        const data = JSON.parse(saved);
+        return Array.isArray(data) ? data : [];
+    }
+    try {
+        const data = JSON.parse(fs.readFileSync(PHOTO_SUBMISSIONS_FILE, 'utf8'));
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    }
+}
+
+async function writePhotoSubmissions(submissions) {
+    const saved = JSON.stringify(submissions, null, 2);
+    if (redisClient) {
+        await redisClient.set(PHOTO_SUBMISSIONS_REDIS_KEY, saved);
+        return;
+    }
+    fs.mkdirSync(MANDIR_DATA_DIR, { recursive: true });
+    const tempFile = PHOTO_SUBMISSIONS_FILE + '.tmp';
+    fs.writeFileSync(tempFile, saved, { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tempFile, PHOTO_SUBMISSIONS_FILE);
+}
+
 const VIDEO_SUBMISSIONS_REDIS_KEY = 'puja-darshan:video-submissions';
 const VIDEO_SUBMISSIONS_FILE = path.join(MANDIR_DATA_DIR, 'video-submissions.json');
 const VIDEO_UPLOAD_TICKET_PREFIX = 'puja-darshan:video-upload-ticket:';
@@ -734,6 +768,23 @@ function hasValidSubmissionImageSignature(buffer) {
         buffer.subarray(8, 12).toString('ascii') === 'WEBP';
 
     return jpeg || png || webp;
+}
+
+async function uploadPhotoSubmissionImage(file) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({
+            folder: PHOTO_SUBMISSION_FOLDER,
+            resource_type: 'image',
+            type: PHOTO_SUBMISSION_TYPE,
+            tags: [PHOTO_SUBMISSION_TAG],
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+        }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        });
+
+        stream.end(file.buffer);
+    });
 }
 
 async function uploadMandirSubmissionImage(file) {
@@ -1471,6 +1522,138 @@ function rejectVideoBot(req, res) {
     return false;
 }
 
+
+const photoSubmissionLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: isProduction ? 3 : 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many photo submissions. Please try again later.' }
+});
+
+app.post('/api/photo-submissions', photoSubmissionLimiter, parseSubmissionImage, async (req, res, next) => {
+    let uploadedAsset = null;
+
+    try {
+        if (rejectVideoBot(req, res)) return;
+
+        const body = req.body || {};
+        const title = typeof body.title === 'string' ? body.title.trim() : '';
+        const description = typeof body.description === 'string' ? body.description.trim() : '';
+        const mandirName = typeof body.mandirName === 'string' ? body.mandirName.trim() : '';
+        const district = typeof body.district === 'string' ? body.district.trim() : '';
+        const submitterName = typeof body.submitterName === 'string' ? body.submitterName.trim() : '';
+        const contact = typeof body.contact === 'string' ? body.contact.trim() : '';
+        const consent = body.rightsConsent === 'on' || body.rightsConsent === 'true';
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please select a photo.' });
+        }
+        if (!hasValidSubmissionImageSignature(req.file.buffer)) {
+            return res.status(400).json({ error: 'The image file is invalid. Use a genuine JPG, PNG or WebP image.' });
+        }
+        if (title.length < 3 || title.length > 100 ||
+            description.length > 2000 ||
+            mandirName.length < 2 || mandirName.length > 150 ||
+            district.length < 2 || district.length > 80 ||
+            submitterName.length > 100 ||
+            contact.length > 150 ||
+            !consent) {
+            return res.status(400).json({
+                error: 'Check the title, mandir, district and photo permission fields.'
+            });
+        }
+
+        uploadedAsset = await uploadPhotoSubmissionImage(req.file);
+
+        if (!uploadedAsset || !uploadedAsset.public_id ||
+            uploadedAsset.resource_type !== 'image' ||
+            !Number.isFinite(Number(uploadedAsset.bytes)) ||
+            Number(uploadedAsset.bytes) < 1 ||
+            Number(uploadedAsset.bytes) > 5 * 1024 * 1024 ||
+            !['jpg', 'jpeg', 'png', 'webp'].includes(String(uploadedAsset.format).toLowerCase())) {
+            if (uploadedAsset && uploadedAsset.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(uploadedAsset.public_id, {
+                        resource_type: 'image',
+                        type: PHOTO_SUBMISSION_TYPE,
+                        invalidate: true
+                    });
+                } catch (cleanupError) {
+                    console.error('Invalid pending photo cleanup failed.');
+                }
+                uploadedAsset = null;
+            }
+            return res.status(400).json({ error: 'The uploaded image did not pass validation.' });
+        }
+
+        const submissions = await readPhotoSubmissions();
+        if (submissions.some(item => item.publicId === uploadedAsset.public_id)) {
+    try {
+        await cloudinary.uploader.destroy(uploadedAsset.public_id, {
+            resource_type: 'image',
+            type: PHOTO_SUBMISSION_TYPE,
+            invalidate: true
+        });
+    } catch (cleanupError) {
+        console.error('Duplicate pending photo cleanup failed.');
+    }
+
+    uploadedAsset = null;
+
+    return res.status(409).json({
+        error: 'This photo has already been submitted.'
+    });
+}
+
+        const submission = {
+            id: require('crypto').randomUUID(),
+            status: 'pending',
+            title,
+            description,
+            mandirName,
+            district,
+            submitterName,
+            contact,
+            originalFilename: path.basename(req.file.originalname || 'photo'),
+            publicId: uploadedAsset.public_id,
+            resourceType: 'image',
+            deliveryType: PHOTO_SUBMISSION_TYPE,
+            bytes: Number(uploadedAsset.bytes),
+            format: String(uploadedAsset.format).toLowerCase(),
+            rightsConsent: true,
+            consentAt: new Date().toISOString(),
+            submittedAt: new Date().toISOString()
+        };
+
+        submissions.unshift(submission);
+
+        try {
+            await writePhotoSubmissions(submissions);
+        } catch (storageError) {
+            try {
+                await cloudinary.uploader.destroy(uploadedAsset.public_id, {
+                    resource_type: 'image',
+                    type: PHOTO_SUBMISSION_TYPE,
+                    invalidate: true
+                });
+            } catch (cleanupError) {
+                console.error('Pending photo cleanup failed.');
+            }
+            uploadedAsset = null;
+            throw storageError;
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: 'Photo received. It remains private and pending admin review.',
+            submissionId: submission.id
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 app.post('/api/video-submissions/sign-upload', videoUploadSignLimiter, async (req, res, next) => {
     try {
         if (rejectVideoBot(req, res)) return;
@@ -1878,6 +2061,170 @@ app.delete('/api/admin/video-submissions/:id', requireAdmin, async (req, res, ne
         submissions.splice(index, 1);
         await writeVideoSubmissions(submissions);
         res.json({ success: true, message: 'Video submission rejected and removed.' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+
+app.get('/api/admin/photo-submissions', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readPhotoSubmissions();
+        res.json({
+            success: true,
+            submissions: submissions.filter(item => item.status === 'pending')
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/admin/photo-submissions/:id/preview', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readPhotoSubmissions();
+        const item = submissions.find(x => x.id === req.params.id && x.status === 'pending');
+
+        if (!item) {
+            return res.status(404).json({ error: 'Pending photo not found.' });
+        }
+
+        const url = cloudinary.url(item.publicId, {
+            resource_type: 'image',
+            type: item.deliveryType || PHOTO_SUBMISSION_TYPE,
+            format: item.format || 'jpg',
+            sign_url: true,
+            secure: true
+        });
+
+        const upstream = await fetch(url);
+        if (!upstream.ok) {
+            await upstream.body?.cancel();
+            return res.status(502).json({ error: 'Private photo preview could not be loaded from Cloudinary.' });
+        }
+
+        const contentType = upstream.headers.get('content-type') || '';
+        if (!contentType.startsWith('image/')) {
+            await upstream.body?.cancel();
+            return res.status(502).json({ error: 'Cloudinary did not return an image.' });
+        }
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'private, no-store');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+
+        if (!upstream.body) return res.end();
+
+        res.on('close', () => {
+            if (!res.writableEnded) upstream.body.cancel().catch(() => {});
+        });
+
+        require('node:stream').Readable.fromWeb(upstream.body).pipe(res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/admin/photo-submissions/:id/approve', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readPhotoSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Photo submission not found.' });
+
+        const submission = submissions[index];
+        if (submission.status !== 'pending') {
+            return res.status(409).json({ error: 'This photo has already been reviewed.' });
+        }
+
+        const targetPublicId = 'puja-darshan/approved-photos/' + submission.id;
+        let renamed;
+
+        try {
+            renamed = await cloudinary.uploader.rename(
+                submission.publicId,
+                targetPublicId,
+                {
+                    resource_type: 'image',
+                    type: submission.deliveryType || PHOTO_SUBMISSION_TYPE,
+                    to_type: 'upload',
+                    overwrite: false,
+                    invalidate: true,
+                    tags: 'puja-darshan-gallery',
+                    context: {
+                        title: submission.title,
+                        description: submission.description || '',
+                        mandir: submission.mandirName,
+                        district: submission.district,
+                        submitter: submission.submitterName || ''
+                    }
+                }
+            );
+        } catch (error) {
+            if (error.http_code === 404) {
+                return res.status(404).json({ error: 'The pending Cloudinary photo was not found.' });
+            }
+            throw error;
+        }
+
+        submissions[index] = {
+            ...submission,
+            status: 'approved',
+            publicId: renamed.public_id || targetPublicId,
+            deliveryType: 'upload',
+            approvedAt: new Date().toISOString()
+        };
+
+        try {
+            await writePhotoSubmissions(submissions);
+        } catch (storageError) {
+            try {
+                await cloudinary.uploader.destroy(targetPublicId, {
+                    resource_type: 'image',
+                    type: 'upload',
+                    invalidate: true
+                });
+            } catch (cleanupError) {
+                console.error('Approved photo rollback cleanup failed.');
+            }
+            throw storageError;
+        }
+
+        publicMediaCache.clear();
+        return res.json({
+            success: true,
+            message: 'Photo approved and published.',
+            submission: submissions[index]
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete('/api/admin/photo-submissions/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readPhotoSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Photo submission not found.' });
+
+        const submission = submissions[index];
+        if (submission.status !== 'pending') {
+            return res.status(409).json({ error: 'Only pending photos can be rejected here.' });
+        }
+
+        try {
+            await cloudinary.uploader.destroy(submission.publicId, {
+                resource_type: 'image',
+                type: submission.deliveryType || PHOTO_SUBMISSION_TYPE,
+                invalidate: true
+            });
+        } catch (error) {
+            if (error.http_code !== 404) throw error;
+        }
+
+        submissions.splice(index, 1);
+        await writePhotoSubmissions(submissions);
+
+        return res.json({ success: true, message: 'Photo submission rejected and removed.' });
     } catch (error) {
         next(error);
     }

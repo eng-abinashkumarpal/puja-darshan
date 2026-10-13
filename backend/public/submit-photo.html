@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
+  <title>Submit Your Puja Photo | Puja Darshan</title>
+  <meta name="description" content="Share your Durga Puja and mandir photos with Puja Darshan. All photos are reviewed before publication.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .photo-submit-section { padding: 2rem 0 4rem; }
+    .photo-submit-card {
+      max-width: 760px; margin: auto; padding: clamp(16px, 4vw, 32px);
+      border-radius: 18px; background: var(--card-bg, #fff);
+      box-shadow: 0 8px 32px rgba(0,0,0,.08);
+    }
+    .photo-submit-form { display: grid; gap: 16px; }
+    .photo-submit-form label { display: block; font-weight: 600; }
+    .photo-submit-form input:not([type=checkbox]):not([type=file]),
+    .photo-submit-form textarea,
+    .photo-submit-form input[type=file] {
+      display: block; box-sizing: border-box; width: 100%; min-width: 0;
+      margin-top: 6px; padding: 12px; border: 1px solid #cbd5e1;
+      border-radius: 10px; font: inherit; font-size: 16px;
+      background: #fff; color: #111827;
+    }
+    .photo-submit-form textarea { min-height: 100px; resize: vertical; }
+    .photo-submit-consent { display: flex !important; gap: 10px; line-height: 1.5; }
+    .photo-submit-consent input { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 3px; }
+    .photo-submit-honeypot { position: absolute; left: -10000px; }
+    .photo-submit-note { padding: 12px; border-radius: 10px; background: #f1f5f9; }
+    #photo-submit-status { overflow-wrap: anywhere; line-height: 1.6; }
+    @media(max-width:600px) {
+      .photo-submit-section { padding: 1rem 0 2rem; }
+      .photo-submit-card { border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-wrapper">
+    <a href="/index.html" class="logo"><span class="logo-symbol">ॐ</span><span>Puja Darshan</span></a>
+    <nav class="main-nav">
+      <a href="/index.html">Home</a>
+      <a href="/gallery.html">Photo Gallery</a>
+      <a href="/videos.html">Videos</a>
+      <a href="/mandir-directory.html">Mandirs</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="gallery-hero">
+    <div class="container">
+      <p class="section-label">COMMUNITY CONTRIBUTIONS</p>
+      <h1>Submit Your <span>Puja Photo</span></h1>
+      <p>Share a Durga Puja memory from your mandir or community.</p>
+    </div>
+  </section>
+
+  <section class="photo-submit-section">
+    <div class="container">
+      <div class="photo-submit-card">
+        <p class="photo-submit-note">
+          Photos remain private while awaiting admin review. Only approved photos will be published.
+          Upload JPG, PNG or WebP images up to 5 MB.
+        </p>
+        <form id="photo-submit-form" class="photo-submit-form">
+          <label>Photo (JPG, PNG or WebP; max 5 MB)
+            <input id="photo-file" name="image" type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+          </label>
+          <label>Photo title
+            <input name="title" maxlength="100" required
+              placeholder="Example: Durga Puja at our mandir">
+          </label>
+          <label>Description (optional)
+            <textarea name="description" maxlength="1500"
+              placeholder="Describe the Puja moment."></textarea>
+          </label>
+          <label>Mandir / Puja venue
+            <input name="mandirName" maxlength="150" required>
+          </label>
+          <label>District
+            <input name="district" maxlength="80" required>
+          </label>
+          <label>Your name (optional)
+            <input name="submitterName" maxlength="100" autocomplete="name">
+          </label>
+          <label>Contact (optional; visible to admins only)
+            <input name="contact" maxlength="150" autocomplete="email"
+              placeholder="Email or phone number">
+          </label>
+          <div class="photo-submit-honeypot" aria-hidden="true">
+            <label>Leave this field empty
+              <input name="website" tabindex="-1" autocomplete="off">
+            </label>
+          </div>
+          <label class="photo-submit-consent">
+            <input name="rightsConsent" type="checkbox" required>
+            <span>I own this photo or have permission to share it. I allow Puja Darshan to review and publish it if approved.</span>
+          </label>
+          <p id="photo-submit-status" role="status" aria-live="polite">
+            Complete the form to submit your photo for review.
+          </p>
+          <button class="btn btn-primary" type="submit">Submit Photo for Review</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <div><a href="/index.html" class="footer-logo">Puja Darshan</a><p>Durga Puja • Culture • Devotion</p></div>
+    <div><p>© 2026 Puja Darshan. All rights reserved.</p></div>
+  </div>
+</footer>
+<script src="/submit-photo.js" defer></script>
+</body>
+</html>

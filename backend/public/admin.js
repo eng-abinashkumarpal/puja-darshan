@@ -42,6 +42,7 @@ function showSignedIn(username) {
   loadGallery();
   loadMandirs();
   loadSubmissions();
+  loadPhotoSubmissions();
 }
 
 async function apiRequest(url, options = {}) {
@@ -706,6 +707,135 @@ async function loadVideoSubmissions() {
 }
 
 refreshVideoSubmissionsButton.addEventListener('click', loadVideoSubmissions);
+
+const pendingPhotoSubmissionList = document.getElementById('pending-photo-submission-list');
+const pendingPhotoSubmissionStatus = document.getElementById('pending-photo-submission-status');
+const refreshPhotoSubmissionsButton = document.getElementById('refresh-photo-submissions-button');
+
+function createPhotoSubmissionAdminCard(item) {
+  const card = document.createElement('article');
+  card.className = 'mandir-admin-card';
+
+  const title = document.createElement('h4');
+  title.textContent = item.title || 'Visitor photo';
+  card.appendChild(title);
+
+  const details = [
+    'Mandir: ' + (item.mandirName || 'Not provided'),
+    'District: ' + (item.district || 'Not provided'),
+    'Submitter: ' + (item.submitterName || 'Not provided'),
+    'Contact: ' + (item.contact || 'Not provided'),
+    'File: ' + (item.originalFilename || 'Unknown'),
+    'Size: ' + formatVideoBytes(item.bytes),
+    'Submitted: ' + (item.submittedAt || '')
+  ];
+
+  for (const text of details) {
+    const p = document.createElement('p');
+    p.textContent = text;
+    card.appendChild(p);
+  }
+
+  if (item.description) {
+    const description = document.createElement('p');
+    description.textContent = item.description;
+    card.appendChild(description);
+  }
+
+  const preview = document.createElement('img');
+  preview.alt = 'Private pending photo preview';
+  preview.loading = 'lazy';
+  preview.style.width = '100%';
+  preview.style.maxWidth = '720px';
+  preview.style.maxHeight = '520px';
+  preview.style.objectFit = 'contain';
+  preview.style.display = 'block';
+  preview.style.margin = '12px 0';
+  preview.src = '/api/admin/photo-submissions/' + encodeURIComponent(item.id) + '/preview';
+  preview.addEventListener('error', () => {
+    pendingPhotoSubmissionStatus.textContent =
+      'Photo preview failed to load. Check the local server and Cloudinary response.';
+  });
+  card.appendChild(preview);
+
+  const actions = document.createElement('div');
+  actions.className = 'mandir-card-actions';
+
+  const approve = document.createElement('button');
+  approve.type = 'button';
+  approve.textContent = 'Approve & Publish';
+
+  const reject = document.createElement('button');
+  reject.type = 'button';
+  reject.className = 'danger';
+  reject.textContent = 'Reject & Delete';
+
+  approve.addEventListener('click', async () => {
+    if (!window.confirm('Approve and publish "' + (item.title || 'this photo') + '"?')) return;
+    approve.disabled = reject.disabled = true;
+    pendingPhotoSubmissionStatus.textContent = 'Approving photo…';
+
+    try {
+      await apiRequest(
+        '/api/admin/photo-submissions/' + encodeURIComponent(item.id) + '/approve',
+        { method: 'POST' }
+      );
+      await loadPhotoSubmissions();
+      await loadGallery();
+      pendingPhotoSubmissionStatus.textContent = 'Photo approved and published.';
+    } catch (error) {
+      pendingPhotoSubmissionStatus.textContent = error.message;
+      approve.disabled = reject.disabled = false;
+    }
+  });
+
+  reject.addEventListener('click', async () => {
+    if (!window.confirm('Reject and permanently delete "' + (item.title || 'this photo') + '"?')) return;
+    approve.disabled = reject.disabled = true;
+    pendingPhotoSubmissionStatus.textContent = 'Rejecting photo…';
+
+    try {
+      await apiRequest(
+        '/api/admin/photo-submissions/' + encodeURIComponent(item.id),
+        { method: 'DELETE' }
+      );
+      await loadPhotoSubmissions();
+      pendingPhotoSubmissionStatus.textContent = 'Photo rejected and deleted.';
+    } catch (error) {
+      pendingPhotoSubmissionStatus.textContent = error.message;
+      approve.disabled = reject.disabled = false;
+    }
+  });
+
+  actions.append(approve, reject);
+  card.appendChild(actions);
+  return card;
+}
+
+async function loadPhotoSubmissions() {
+  pendingPhotoSubmissionList.replaceChildren();
+  pendingPhotoSubmissionStatus.textContent = 'Loading pending photos…';
+
+  try {
+    const data = await apiRequest('/api/admin/photo-submissions');
+    const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+
+    if (!submissions.length) {
+      pendingPhotoSubmissionStatus.textContent = 'No pending photo submissions.';
+      return;
+    }
+
+    for (const item of submissions) {
+      pendingPhotoSubmissionList.appendChild(createPhotoSubmissionAdminCard(item));
+    }
+
+    pendingPhotoSubmissionStatus.textContent = 'Pending photos: ' + submissions.length;
+  } catch (error) {
+    pendingPhotoSubmissionStatus.textContent = error.message;
+  }
+}
+
+refreshPhotoSubmissionsButton.addEventListener('click', loadPhotoSubmissions);
 
 function createSubmissionAdminCard(item) {
   const card = document.createElement('article');
