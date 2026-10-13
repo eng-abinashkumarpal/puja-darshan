@@ -87,6 +87,117 @@ async function writeMandirSubmissions(submissions) {
     fs.renameSync(tempFile, MANDIR_SUBMISSIONS_FILE);
 }
 
+
+const VIDEO_SUBMISSIONS_REDIS_KEY = 'puja-darshan:video-submissions';
+const VIDEO_SUBMISSIONS_FILE = path.join(MANDIR_DATA_DIR, 'video-submissions.json');
+const VIDEO_UPLOAD_TICKET_PREFIX = 'puja-darshan:video-upload-ticket:';
+const MAX_VIDEO_SUBMISSION_BYTES = 1024 * 1024 * 1024;
+const VIDEO_SUBMISSION_FOLDER = 'puja-darshan/video-submissions';
+const VIDEO_SUBMISSION_TAG = 'puja-darshan-pending-video-submission';
+const VIDEO_SUBMISSION_TYPE = 'authenticated';
+const localVideoUploadTickets = new Map();
+
+async function readVideoSubmissions() {
+    if (redisClient) {
+        const saved = await redisClient.get(VIDEO_SUBMISSIONS_REDIS_KEY);
+        if (!saved) return [];
+        const data = JSON.parse(saved);
+        return Array.isArray(data) ? data : [];
+    }
+
+    try {
+        const data = JSON.parse(fs.readFileSync(VIDEO_SUBMISSIONS_FILE, 'utf8'));
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    }
+}
+
+async function writeVideoSubmissions(submissions) {
+    const saved = JSON.stringify(submissions, null, 2);
+
+    if (redisClient) {
+        await redisClient.set(VIDEO_SUBMISSIONS_REDIS_KEY, saved);
+        return;
+    }
+
+    fs.mkdirSync(MANDIR_DATA_DIR, { recursive: true });
+    const tempFile = VIDEO_SUBMISSIONS_FILE + '.tmp';
+    fs.writeFileSync(tempFile, saved, { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tempFile, VIDEO_SUBMISSIONS_FILE);
+}
+
+async function saveVideoUploadTicket(ticket) {
+    if (redisClient) {
+        await redisClient.set(
+            VIDEO_UPLOAD_TICKET_PREFIX + ticket.id,
+            JSON.stringify(ticket),
+            { EX: 6 * 60 * 60, NX: true }
+        );
+        return;
+    }
+    localVideoUploadTickets.set(ticket.id, ticket);
+}
+
+async function getVideoUploadTicket(id) {
+    if (redisClient) {
+        const raw = await redisClient.get(VIDEO_UPLOAD_TICKET_PREFIX + id);
+        if (!raw) return null;
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return null;
+        }
+    }
+
+    const ticket = localVideoUploadTickets.get(id);
+    if (!ticket) return null;
+
+    if (Date.now() - ticket.createdAt > 6 * 60 * 60 * 1000) {
+        localVideoUploadTickets.delete(id);
+        return null;
+    }
+    return ticket;
+}
+
+async function deleteVideoUploadTicket(id) {
+    if (redisClient) {
+        await redisClient.del(VIDEO_UPLOAD_TICKET_PREFIX + id);
+        return;
+    }
+    localVideoUploadTickets.delete(id);
+}
+
+function createVideoUploadSignature(ticket) {
+    const config = cloudinary.config();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || config.api_secret;
+
+    if (!config.cloud_name || !config.api_key || !apiSecret) {
+        throw new Error('Cloudinary upload signing is not configured.');
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const params = {
+        folder: ticket.folder,
+        public_id: ticket.publicId,
+        tags: ticket.tags,
+        type: ticket.deliveryType,
+        timestamp
+    };
+
+    return {
+        cloud_name: config.cloud_name,
+        api_key: config.api_key,
+        signature: cloudinary.utils.api_sign_request(params, apiSecret),
+        timestamp,
+        folder: ticket.folder,
+        public_id: ticket.publicId,
+        tags: ticket.tags,
+        type: ticket.deliveryType
+    };
+}
+
 const ADMIN_PASSWORD_REDIS_KEY = 'puja-darshan:admin-password-hash-b64';
 const ADMIN_PASSWORD_FILE = path.join(MANDIR_DATA_DIR, 'admin-password.json');
 
@@ -171,6 +282,7 @@ app.use(helmet({
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
             "img-src": ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
             "media-src": ["'self'", "blob:", "https://res.cloudinary.com"],
+            "connect-src": ["'self'", "https://api.cloudinary.com", "https://puja-darshan-api.onrender.com"],
         }
     }
 }));
@@ -1324,6 +1436,415 @@ const mandirSubmissionLimiter = rateLimit({
 function normalizeMandirKey(value) {
     return String(value || '').trim().toLowerCase();
 }
+
+
+const videoUploadSignLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: isProduction ? 3 : 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many video upload attempts. Please try again later.' }
+});
+
+const videoUploadRefreshLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: isProduction ? 180 : 1000,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many upload chunks. Please retry later.' }
+});
+
+const videoSubmissionLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: isProduction ? 3 : 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many video submissions. Please try again later.' }
+});
+
+function rejectVideoBot(req, res) {
+    const body = req.body || {};
+    if (typeof body.website === 'string' && body.website.trim()) {
+        res.status(400).json({ error: 'Submission could not be accepted.' });
+        return true;
+    }
+    return false;
+}
+
+app.post('/api/video-submissions/sign-upload', videoUploadSignLimiter, async (req, res, next) => {
+    try {
+        if (rejectVideoBot(req, res)) return;
+
+        const body = req.body || {};
+        const fileName = typeof body.fileName === 'string'
+            ? body.fileName.replace(/[\\/]/g, '_').slice(0, 180)
+            : '';
+        const fileSize = Number(body.fileSize);
+        const extension = path.extname(fileName).toLowerCase();
+
+        if (!['.mp4', '.mov', '.webm'].includes(extension)) {
+            return res.status(400).json({
+                error: 'Choose an MP4, MOV or WebM video.'
+            });
+        }
+
+        if (!Number.isSafeInteger(fileSize) ||
+            fileSize < 1 ||
+            fileSize > MAX_VIDEO_SUBMISSION_BYTES) {
+            return res.status(413).json({
+                error: 'Video must be 1 GB or smaller.'
+            });
+        }
+
+        const id = require('crypto').randomUUID();
+        const publicId = 'visitor_video_' +
+            require('crypto').randomUUID().replace(/-/g, '');
+
+        const ticket = {
+            id,
+            publicId,
+            fileName,
+            fileSize,
+            folder: VIDEO_SUBMISSION_FOLDER,
+            tags: VIDEO_SUBMISSION_TAG,
+            deliveryType: VIDEO_SUBMISSION_TYPE,
+            createdAt: Date.now()
+        };
+
+        await saveVideoUploadTicket(ticket);
+        const signed = createVideoUploadSignature(ticket);
+
+        res.set('Cache-Control', 'no-store');
+        return res.status(201).json({
+            success: true,
+            ticketId: id,
+            uploadId: id,
+            maxBytes: MAX_VIDEO_SUBMISSION_BYTES,
+            ...signed
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/video-submissions/refresh-signature', videoUploadRefreshLimiter, async (req, res, next) => {
+    try {
+        const body = req.body || {};
+        const id = typeof body.ticketId === 'string' ? body.ticketId : '';
+
+        if (!/^[a-f0-9-]{36}$/i.test(id)) {
+            return res.status(400).json({ error: 'Invalid upload session.' });
+        }
+
+        const ticket = await getVideoUploadTicket(id);
+        if (!ticket) {
+            return res.status(410).json({
+                error: 'Upload session expired. Please start again.'
+            });
+        }
+
+        res.set('Cache-Control', 'no-store');
+        return res.json({
+            success: true,
+            ticketId: ticket.id,
+            uploadId: ticket.id,
+            maxBytes: MAX_VIDEO_SUBMISSION_BYTES,
+            ...createVideoUploadSignature(ticket)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/video-submissions', videoSubmissionLimiter, async (req, res, next) => {
+    let ticket = null;
+
+    try {
+        if (rejectVideoBot(req, res)) return;
+
+        const body = req.body || {};
+        const ticketId = typeof body.ticketId === 'string' ? body.ticketId : '';
+        const publicId = typeof body.public_id === 'string' ? body.public_id : '';
+
+        if (!/^[a-f0-9-]{36}$/i.test(ticketId) || !publicId || publicId.length > 500) {
+            return res.status(400).json({ error: 'Invalid video upload session.' });
+        }
+
+        ticket = await getVideoUploadTicket(ticketId);
+        if (!ticket) {
+            return res.status(410).json({
+                error: 'Upload session expired. Please upload again.'
+            });
+        }
+
+        if (publicId !== ticket.publicId &&
+            !publicId.endsWith('/' + ticket.publicId)) {
+            return res.status(403).json({
+                error: 'The uploaded video does not match this upload session.'
+            });
+        }
+
+        const title = typeof body.title === 'string' ? body.title.trim() : '';
+        const description = typeof body.description === 'string'
+            ? body.description.trim()
+            : '';
+        const mandirName = typeof body.mandirName === 'string'
+            ? body.mandirName.trim()
+            : '';
+        const district = typeof body.district === 'string'
+            ? body.district.trim()
+            : '';
+        const submitterName = typeof body.submitterName === 'string'
+            ? body.submitterName.trim()
+            : '';
+        const contact = typeof body.contact === 'string'
+            ? body.contact.trim()
+            : '';
+
+        if (title.length < 3 || title.length > 100 ||
+            description.length > 2000 ||
+            mandirName.length < 2 || mandirName.length > 150 ||
+            district.length < 2 || district.length > 80 ||
+            submitterName.length > 100 ||
+            contact.length > 150 ||
+            body.rightsConsent !== true) {
+            return res.status(400).json({
+                error: 'Check the title, mandir, district and publication permission fields.'
+            });
+        }
+
+        const extension = path.extname(ticket.fileName).toLowerCase();
+        const asset = await cloudinary.api.resource(publicId, {
+            resource_type: 'video',
+            type: VIDEO_SUBMISSION_TYPE
+        });
+
+        if (asset.resource_type !== 'video' ||
+            !Array.isArray(asset.tags) ||
+            !asset.tags.includes(VIDEO_SUBMISSION_TAG) ||
+            !['mp4', 'mov', 'webm'].includes(String(asset.format).toLowerCase()) ||
+            !Number.isFinite(Number(asset.bytes)) ||
+            Number(asset.bytes) < 1 ||
+            Number(asset.bytes) > MAX_VIDEO_SUBMISSION_BYTES) {
+            return res.status(400).json({
+                error: 'The uploaded asset did not pass video validation.'
+            });
+        }
+
+        const submissions = await readVideoSubmissions();
+        if (submissions.some(item => item.publicId === asset.public_id)) {
+            return res.status(409).json({
+                error: 'This video has already been submitted.'
+            });
+        }
+
+        const submission = {
+            id: require('crypto').randomUUID(),
+            status: 'pending',
+            title,
+            description,
+            mandirName,
+            district,
+            submitterName,
+            contact,
+            originalFilename: ticket.fileName,
+            publicId: asset.public_id,
+            resourceType: 'video',
+            deliveryType: VIDEO_SUBMISSION_TYPE,
+            bytes: Number(asset.bytes),
+            format: String(asset.format).toLowerCase(),
+            duration: Number.isFinite(Number(asset.duration))
+                ? Number(asset.duration)
+                : null,
+            rightsConsent: true,
+            consentAt: new Date().toISOString(),
+            submittedAt: new Date().toISOString()
+        };
+
+        submissions.unshift(submission);
+
+        try {
+            await writeVideoSubmissions(submissions);
+        } catch (storageError) {
+            try {
+                await cloudinary.uploader.destroy(asset.public_id, {
+                    resource_type: 'video',
+                    type: VIDEO_SUBMISSION_TYPE,
+                    invalidate: true
+                });
+            } catch (cleanupError) {
+                console.error('Pending video cleanup failed.');
+            }
+            throw storageError;
+        }
+
+        await deleteVideoUploadTicket(ticketId);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Video received. It remains private and pending admin review.',
+            submissionId: submission.id
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+// Admin review queue for visitor video submissions.
+app.get('/api/admin/video-submissions', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readVideoSubmissions();
+        res.json({
+            success: true,
+            submissions: submissions.filter(item => item.status === 'pending')
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+ // Stream pending authenticated videos only to a signed-in admin.
+app.get('/api/admin/video-submissions/:id/preview', requireAdmin, async (req, res, next) => {
+  try {
+    const submissions = await readVideoSubmissions();
+    const item = submissions.find(x => x.id === req.params.id && x.status === 'pending');
+    if (!item) return res.status(404).json({ error: 'Pending video not found.' });
+
+    const url = cloudinary.url(item.publicId, {
+      resource_type: 'video',
+      type: 'authenticated',
+      format: item.format || 'mp4',
+      sign_url: true,
+      secure: true
+    });
+
+    const headers = {};
+    if (req.headers.range) headers.Range = req.headers.range;
+    const upstream = await fetch(url, { headers });
+
+    if (!upstream.ok && upstream.status !== 206) {
+      await upstream.body?.cancel();
+      return res.status(502).json({ error: 'Private video preview could not be loaded from Cloudinary.' });
+    }
+
+    res.status(upstream.status);
+    for (const name of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
+      const value = upstream.headers.get(name);
+      if (value) res.setHeader(name, value);
+    }
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    if (!upstream.body) return res.end();
+    res.on('close', () => {
+      if (!res.writableEnded) upstream.body.cancel().catch(() => {});
+    });
+    require('node:stream').Readable.fromWeb(upstream.body).pipe(res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/admin/video-submissions/:id/approve', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readVideoSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Video submission not found.' });
+
+        const submission = submissions[index];
+        if (submission.status !== 'pending') {
+            return res.status(409).json({ error: 'This video has already been reviewed.' });
+        }
+
+        const targetPublicId = 'puja-darshan/approved-videos/' + submission.id;
+        let renamed;
+        try {
+            renamed = await cloudinary.uploader.rename(
+                submission.publicId,
+                targetPublicId,
+                {
+                    resource_type: 'video',
+                    type: VIDEO_SUBMISSION_TYPE,
+                    to_type: 'upload',
+                    overwrite: false,
+                    invalidate: true,
+                    tags: 'puja-darshan-gallery',
+                    context: {
+                        title: submission.title,
+                        description: submission.description || '',
+                        mandir: submission.mandirName,
+                        district: submission.district,
+                        submitter: submission.submitterName || ''
+                    }
+                }
+            );
+        } catch (error) {
+            if (error.http_code === 404) {
+                return res.status(404).json({ error: 'The pending Cloudinary video was not found.' });
+            }
+            throw error;
+        }
+
+        submissions[index] = {
+            ...submission,
+            status: 'approved',
+            publicId: renamed.public_id || targetPublicId,
+            deliveryType: 'upload',
+            approvedAt: new Date().toISOString()
+        };
+
+        try {
+            await writeVideoSubmissions(submissions);
+        } catch (storageError) {
+            // Best-effort rollback: keep the approved Cloudinary asset private from the public gallery.
+            try {
+                await cloudinary.uploader.destroy(targetPublicId, {
+                    resource_type: 'video',
+                    type: 'upload',
+                    invalidate: true
+                });
+            } catch (_) {}
+            throw storageError;
+        }
+
+        publicMediaCache.clear();
+        res.json({ success: true, message: 'Video approved and published.', submission: submissions[index] });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete('/api/admin/video-submissions/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const submissions = await readVideoSubmissions();
+        const index = submissions.findIndex(item => item.id === req.params.id);
+        if (index === -1) return res.status(404).json({ error: 'Video submission not found.' });
+
+        const submission = submissions[index];
+        if (submission.status !== 'pending') {
+            return res.status(409).json({ error: 'Only pending video submissions can be rejected here.' });
+        }
+
+        try {
+            await cloudinary.uploader.destroy(submission.publicId, {
+                resource_type: 'video',
+                type: submission.deliveryType || VIDEO_SUBMISSION_TYPE,
+                invalidate: true
+            });
+        } catch (error) {
+            if (error.http_code !== 404) throw error;
+        }
+
+        submissions.splice(index, 1);
+        await writeVideoSubmissions(submissions);
+        res.json({ success: true, message: 'Video submission rejected and removed.' });
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 app.post('/api/mandir-submissions', mandirSubmissionLimiter, parseSubmissionImage, async (req, res, next) => {
     try {

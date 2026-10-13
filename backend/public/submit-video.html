@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="robots" content="index, follow">
+  <title>Submit Your Puja Video | Puja Darshan</title>
+  <meta name="description" content="Submit your Durga Puja video from Bangladesh for review by Puja Darshan.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .video-submit-section { padding: 2rem 0 4rem; }
+    .video-submit-card {
+      max-width: 760px; margin: 0 auto; padding: clamp(16px, 4vw, 32px);
+      border-radius: 18px; background: var(--card-bg, #fff);
+      box-shadow: 0 8px 32px rgba(0,0,0,.08);
+    }
+    .video-submit-form { display: grid; gap: 16px; }
+    .video-submit-form label { display: block; font-weight: 600; }
+    .video-submit-form input:not([type=checkbox]):not([type=file]),
+    .video-submit-form textarea,
+    .video-submit-form input[type=file] {
+      display: block; box-sizing: border-box; width: 100%; max-width: 100%;
+      min-width: 0; margin-top: 6px; padding: 12px;
+      border: 1px solid #cbd5e1; border-radius: 10px; font: inherit;
+      font-size: 16px; background: #fff; color: #111827;
+    }
+    .video-submit-form textarea { min-height: 110px; resize: vertical; }
+    .video-submit-consent { display: flex !important; align-items: flex-start; gap: 10px; line-height: 1.5; }
+    .video-submit-consent input { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 3px; }
+    .video-submit-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+    #video-upload-progress { width: 100%; height: 14px; }
+    #video-upload-status { overflow-wrap: anywhere; line-height: 1.6; }
+    .video-submit-note { padding: 12px; border-radius: 10px; background: #f1f5f9; color: #334155; }
+    .video-submit-button { width: 100%; min-height: 48px; }
+    @media(max-width:600px) {
+      .video-submit-section { padding: 1rem 0 2rem; }
+      .video-submit-card { border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-wrapper">
+    <a href="index.html" class="logo"><span class="logo-symbol">ॐ</span><span>Puja Darshan</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="gallery.html">Photo Gallery</a>
+      <a href="videos.html">Videos</a>
+      <a href="mandir-directory.html">Mandirs</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="gallery-hero">
+    <div class="container">
+      <p class="section-label">COMMUNITY CONTRIBUTIONS</p>
+      <h1>Submit Your <span>Puja Video</span></h1>
+      <p>Share a Durga Puja moment from your mandir or community in Bangladesh.</p>
+    </div>
+  </section>
+
+  <section class="video-submit-section">
+    <div class="container">
+      <div class="video-submit-card">
+        <div class="video-submit-note">
+          Videos upload directly to secure Cloudinary storage in chunks. Every submission stays private and pending until an admin reviews it. Publication on YouTube is not automatic.
+        </div>
+        <form class="video-submit-form" id="video-submit-form">
+          <label>Video file (MP4, MOV or WebM; up to 1 GB)
+            <input id="video-file" name="file" type="file" accept=".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm" required>
+          </label>
+          <label>Video title
+            <input id="video-title" name="title" maxlength="100" required placeholder="Example: Durga Puja celebrations at our mandir">
+          </label>
+          <label>Description (optional)
+            <textarea id="video-description" name="description" maxlength="2000" placeholder="Tell us what is happening in this video."></textarea>
+          </label>
+          <label>Mandir / Puja venue name
+            <input id="video-mandir" name="mandirName" maxlength="150" required>
+          </label>
+          <label>District
+            <input id="video-district" name="district" maxlength="80" required>
+          </label>
+          <label>Your name (optional)
+            <input id="video-submitter" name="submitterName" maxlength="100" autocomplete="name">
+          </label>
+          <label>Contact (optional; kept for admin review)
+            <input id="video-contact" name="contact" maxlength="150" autocomplete="email" placeholder="Email or phone number">
+          </label>
+          <div class="video-submit-honeypot" aria-hidden="true">
+            <label>Leave this field empty <input id="video-website" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <label class="video-submit-consent">
+            <input id="video-rights-consent" type="checkbox" required>
+            <span>I confirm I own this video or have permission to share it, and I allow Puja Darshan to review it and publish it on its website or YouTube channel if approved.</span>
+          </label>
+          <div>
+            <progress id="video-upload-progress" max="100" value="0"></progress>
+            <p id="video-upload-status" role="status" aria-live="polite">Select a video to begin.</p>
+          </div>
+          <button id="video-submit-button" class="btn btn-primary video-submit-button" type="submit">Upload Video for Review</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-content">
+    <div><a href="index.html" class="footer-logo">Puja Darshan</a><p>Durga Puja • Culture • Devotion</p></div>
+    <div><p>© 2026 Puja Darshan. All rights reserved.</p></div>
+  </div>
+</footer>
+
+<script src="/submit-video.js" defer></script>
+</body>
+</html>

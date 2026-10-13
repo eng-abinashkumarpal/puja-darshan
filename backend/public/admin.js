@@ -575,6 +575,138 @@ function createMandirAdminCard(item) {
 }
 
 
+
+const pendingVideoSubmissionList = document.getElementById('pending-video-submission-list');
+const pendingVideoSubmissionStatus = document.getElementById('pending-video-submission-status');
+const refreshVideoSubmissionsButton = document.getElementById('refresh-video-submissions-button');
+
+function formatVideoBytes(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value < 1) return 'Unknown size';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let n = value;
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
+function formatVideoDuration(seconds) {
+  const value = Number(seconds);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  const total = Math.round(value);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  return (h ? h + ':' : '') + String(m).padStart(h ? 2 : 1, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function createVideoSubmissionAdminCard(item) {
+  const card = document.createElement('article');
+  card.className = 'mandir-admin-card';
+  const title = document.createElement('h4');
+  title.textContent = item.title || 'Visitor video';
+  card.appendChild(title);
+
+  const details = [
+    'Mandir: ' + (item.mandirName || 'Not provided'),
+    'District: ' + (item.district || 'Not provided'),
+    'Submitter: ' + (item.submitterName || 'Not provided'),
+    'Contact: ' + (item.contact || 'Not provided'),
+    'File: ' + (item.originalFilename || 'Unknown') + ' · ' + formatVideoBytes(item.bytes) +
+      (formatVideoDuration(item.duration) ? ' · ' + formatVideoDuration(item.duration) : ''),
+    'Submitted: ' + (item.submittedAt || '')
+  ];
+  for (const text of details) {
+    const p = document.createElement('p');
+    p.textContent = text;
+    card.appendChild(p);
+  }
+
+  if (item.description) {
+    const p = document.createElement('p');
+    p.textContent = item.description;
+    card.appendChild(p);
+  }
+
+
+  const preview = document.createElement('video');
+  preview.controls = true;
+  preview.preload = 'metadata';
+  preview.playsInline = true;
+  preview.style.width = '100%';
+  preview.style.maxWidth = '720px';
+  preview.style.display = 'block';
+  preview.style.margin = '12px 0';
+  preview.setAttribute('aria-label', 'Private pending video preview');
+  preview.src = '/api/admin/video-submissions/' + encodeURIComponent(item.id) + '/preview';
+  preview.addEventListener('error', () => {
+    pendingVideoSubmissionStatus.textContent = 'Video preview failed to load. Check the local server and Cloudinary response.';
+  });
+  card.appendChild(preview);
+
+  const actions = document.createElement('div');
+  actions.className = 'mandir-card-actions';
+  const approve = document.createElement('button');
+  approve.type = 'button';
+  approve.textContent = 'Approve & Publish';
+  const reject = document.createElement('button');
+  reject.type = 'button';
+  reject.className = 'danger';
+  reject.textContent = 'Reject & Delete';
+
+  approve.addEventListener('click', async () => {
+    if (!window.confirm('Approve and publish "' + (item.title || 'this video') + '"?')) return;
+    approve.disabled = reject.disabled = true;
+    pendingVideoSubmissionStatus.textContent = 'Approving video…';
+    try {
+      await apiRequest('/api/admin/video-submissions/' + encodeURIComponent(item.id) + '/approve', { method: 'POST' });
+      await loadVideoSubmissions();
+      await loadGallery();
+      pendingVideoSubmissionStatus.textContent = 'Video approved and published.';
+    } catch (error) {
+      pendingVideoSubmissionStatus.textContent = error.message;
+      approve.disabled = reject.disabled = false;
+    }
+  });
+
+  reject.addEventListener('click', async () => {
+    if (!window.confirm('Reject and permanently delete "' + (item.title || 'this video') + '"?')) return;
+    approve.disabled = reject.disabled = true;
+    pendingVideoSubmissionStatus.textContent = 'Rejecting video…';
+    try {
+      await apiRequest('/api/admin/video-submissions/' + encodeURIComponent(item.id), { method: 'DELETE' });
+      await loadVideoSubmissions();
+      pendingVideoSubmissionStatus.textContent = 'Video rejected and deleted.';
+    } catch (error) {
+      pendingVideoSubmissionStatus.textContent = error.message;
+      approve.disabled = reject.disabled = false;
+    }
+  });
+
+  actions.append(approve, reject);
+  card.appendChild(actions);
+  return card;
+}
+
+async function loadVideoSubmissions() {
+  pendingVideoSubmissionList.replaceChildren();
+  pendingVideoSubmissionStatus.textContent = 'Loading pending videos…';
+  try {
+    const data = await apiRequest('/api/admin/video-submissions');
+    const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+    if (!submissions.length) {
+      pendingVideoSubmissionStatus.textContent = 'No pending video submissions.';
+      return;
+    }
+    for (const item of submissions) pendingVideoSubmissionList.appendChild(createVideoSubmissionAdminCard(item));
+    pendingVideoSubmissionStatus.textContent = 'Pending videos: ' + submissions.length;
+  } catch (error) {
+    pendingVideoSubmissionStatus.textContent = error.message;
+  }
+}
+
+refreshVideoSubmissionsButton.addEventListener('click', loadVideoSubmissions);
+
 function createSubmissionAdminCard(item) {
   const card = document.createElement('article');
   card.className = 'mandir-admin-card';

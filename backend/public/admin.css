@@ -259,3 +259,6 @@ body.admin-signed-in .panel #media-gallery {
     gap: 8px;
   }
 }
+
+#pending-video-submission-list .mandir-admin-card { background: #f8fafc; }
+#pending-video-submission-list .mandir-card-actions button { flex: 1 1 180px; }
