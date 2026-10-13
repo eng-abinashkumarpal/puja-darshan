@@ -1707,44 +1707,82 @@ app.get('/api/admin/video-submissions', requireAdmin, async (req, res, next) => 
 
  // Stream pending authenticated videos only to a signed-in admin.
 app.get('/api/admin/video-submissions/:id/preview', requireAdmin, async (req, res, next) => {
-  try {
-    const submissions = await readVideoSubmissions();
-    const item = submissions.find(x => x.id === req.params.id && x.status === 'pending');
-    if (!item) return res.status(404).json({ error: 'Pending video not found.' });
+    try {
+        const submissions = await readVideoSubmissions();
 
-    const url = cloudinary.url(item.publicId, {
-      resource_type: 'video',
-      type: 'authenticated',
-      format: item.format || 'mp4',
-      sign_url: true,
-      secure: true
-    });
+        const item = submissions.find(
+            x => x.id === req.params.id && x.status === 'pending'
+        );
 
-    const headers = {};
-    if (req.headers.range) headers.Range = req.headers.range;
-    const upstream = await fetch(url, { headers });
+        if (!item) {
+            return res.status(404).json({
+                error: 'Pending video not found.'
+            });
+        }
 
-    if (!upstream.ok && upstream.status !== 206) {
-      await upstream.body?.cancel();
-      return res.status(502).json({ error: 'Private video preview could not be loaded from Cloudinary.' });
+        const url = cloudinary.url(item.publicId, {
+            resource_type: 'video',
+            type: 'authenticated',
+            format: item.format || 'mp4',
+            sign_url: true,
+            secure: true
+        });
+
+        const headers = {};
+
+        if (req.headers.range) {
+            headers.Range = req.headers.range;
+        }
+
+        const upstream = await fetch(url, { headers });
+
+        if (!upstream.ok && upstream.status !== 206) {
+            console.error('Cloudinary preview upstream failed:', {
+                status: upstream.status,
+                contentType: upstream.headers.get('content-type')
+            });
+
+            await upstream.body?.cancel();
+
+            return res.status(502).json({
+                error: 'Private video preview could not be loaded from Cloudinary.'
+            });
+        }
+
+        res.status(upstream.status);
+
+        for (const name of [
+            'content-type',
+            'content-length',
+            'content-range',
+            'accept-ranges'
+        ]) {
+            const value = upstream.headers.get(name);
+
+            if (value) {
+                res.setHeader(name, value);
+            }
+        }
+
+        res.setHeader('Cache-Control', 'private, no-store');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+
+        if (!upstream.body) {
+            return res.end();
+        }
+
+        res.on('close', () => {
+            if (!res.writableEnded) {
+                upstream.body.cancel().catch(() => {});
+            }
+        });
+
+        require('node:stream').Readable
+            .fromWeb(upstream.body)
+            .pipe(res);
+    } catch (error) {
+        next(error);
     }
-
-    res.status(upstream.status);
-    for (const name of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
-      const value = upstream.headers.get(name);
-      if (value) res.setHeader(name, value);
-    }
-    res.setHeader('Cache-Control', 'private, no-store');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-
-    if (!upstream.body) return res.end();
-    res.on('close', () => {
-      if (!res.writableEnded) upstream.body.cancel().catch(() => {});
-    });
-    require('node:stream').Readable.fromWeb(upstream.body).pipe(res);
-  } catch (error) {
-    next(error);
-  }
 });
 
 app.post('/api/admin/video-submissions/:id/approve', requireAdmin, async (req, res, next) => {
